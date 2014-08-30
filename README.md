@@ -23,9 +23,9 @@ Instructions
 Simply by calling s2sc.convert() will instruct s2sc to  generate an equivalent source code 
 from its original language to its targeted language.
 
-'''javascript
-// s2sc.convert(s2sc.language.python, s2sc.language.c, "txt = 'Hello World!'")
-'''
+```javascript
+s2sc.convert(s2sc.language.python, s2sc.language.c, "txt = 'Hello World!'")
+```
 
 Will return you the output string
 
