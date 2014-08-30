@@ -1,6 +1,6 @@
 /**
  * This file contains all utility classes and functions that the modules
- * tokenizer, parser, dictionary and analyzer needs in order to do their operations.
+ * tokenizer, parser, dictionary and generator needs in order to do their operations.
  *
  * Some of these classes and functions here completely rely on Objects that where declared on these modules
  * so even though this part of code is not GPL licensed, be careful which code you copy and paste
@@ -12,10 +12,6 @@ var clone = {
 
 		return new Variable(vari.name, vari.type, vari.lineDeclared)
 	}
-}
-
-var parenthesisParser = {
-
 }
 
 var getAllProperty = function(object, type) {
@@ -48,7 +44,7 @@ var isEquation = function(arr) {
 		return "";
 	}
 	var dataType = "";
-	n = arr.split(" ");
+	var n = arr.split(" ");
 
 	for (var i = 0; i < n.length; i++) {
 
@@ -57,7 +53,7 @@ var isEquation = function(arr) {
 		}
 		try {
 
-			var tmp = analyzer.refactor.getVariable(n[i]);
+			var tmp = generator.refactor.getVariable(n[i]);
 			if ((tmp.type == "int" || tmp.type == "float") && (dataType != "string" || dataType == "")) {
 				dataType = tmp.type;
 			}

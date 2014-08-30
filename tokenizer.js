@@ -27,16 +27,6 @@
  *
  */
 
-/**************************************************************
-	Bug List: [Since im not doing git repositories YET imma do this]
-
-	1.) Tokenizer still recognizes certain names as keywords (Happens randomly?)
-		[Update: 2014-07-23] This bug has been fixed
-	2.) Tokenizer recognizes real numbers with their integer counter parts (1 = 1.1) => Confirmed bug on tokenizer.replace function and a => ab
-		[Update: 2014-07-22] a => ab is now fixed, working on 1 = 1.1
-		[Update: 2014-07-23] This bug has been fixed
-****************************************************************/
-
 function Token (objId, objType, objValue) {
 
 	this.id = objId;
@@ -396,6 +386,31 @@ var tokenizer = {
 		}
 
 		return lines;
+	},
+
+	detokenize: function (line) {
+
+		var tokens = [];
+		var begin = false;
+		var token = "";
+		for (var i = 0; i < line.length; i++) {
+
+			if (line[i] == "{") {
+				begin = true;
+				continue;
+			}
+			else if (line[i] == "}" && begin) {
+				begin = false;
+				tokens.push(token);
+				token = "";
+			}
+
+			if (begin) {
+				token += line[i];
+			}
+		}
+
+		return tokens;
 	},
 
 /*

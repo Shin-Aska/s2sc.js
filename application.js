@@ -18,8 +18,6 @@
 
 $( document ).ready(function() {
 
-	dictionary.cpp.initialize();
-	dictionary.python.initialize();
 	var textareas = document.getElementsByTagName('textarea');
 	var count = textareas.length;
 	for(var i=0;i<count;i++){
@@ -77,7 +75,11 @@ $( document ).ready(function() {
 			try {
 
 				var resMap = $('input[type=file]').val();
-				var map = tokenizer.tokenize(value.replace(/\t/g, "    "));
+				var result = s2sc.convert("Python-language", "C-language", value);
+				var map = s2sc.map;
+				var symbol = s2sc.symbol;
+				consolehandler.console = "console";
+
 				var resultant = "<style>td, th {border: 1px solid black;}</style>";
 				resultant += "<p>Generating Tokens from String...\n</p>";
 				resultant += "<p>Showing result...</p>";
@@ -89,11 +91,10 @@ $( document ).ready(function() {
 				resultant += "</table>";
 				resultant += "<hr>";
 				$("#console").contents().find('html').html(resultant);
+				consolehandler.showParsingInformation(map);
 
-				var symbol = parser.check_displayTable("console", map);
-				analyzer.getTokensFromString(map, symbol);
-				document.getElementById('output').value = analyzer.variables.result;
-				editAreaLoader.setValue("output", analyzer.variables.result);
+				document.getElementById('output').value = result;
+				editAreaLoader.setValue("output", result);
 			}
 			catch (exception) {
 

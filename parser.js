@@ -62,8 +62,6 @@ function ParseHistoryRow (buffer, unscanned, next, action) {
 
 var parser = {
 
-	debug : true,
-
 	grammar : [
 
 		// Action check triggers
@@ -217,13 +215,13 @@ var parser = {
 	// Syntatically check if the codes submitted to the
 	// system is legal based on the given grammar
 
-	syntaxCheck: function (map) {
+	parse: function (map) {
 
 		if (map == "")
 			return true;
 		parser.tmp.stack = [];
 
-		var tokens = parser.detokenize(map);
+		var tokens = tokenizer.detokenize(map);
 		var lowestCaseNumber = 2000000;
 		var stack = [];
 		var historyStack = [];
@@ -422,84 +420,5 @@ var parser = {
 		}
 
 		return result;
-	},
-
-/*
-	This function is responsible for the information posted on the console screen
-*/
-
-	check_displayTable: function(console, map) {
-
-		var chkMap = [];
-		var string = "";
-
-		for (var i = 0; i < map.length; i++) {
-
-			var result = "";
-			if (map[i].length != 0) {
-				result = parser.syntaxCheck(map[i]);
-			}
-			else {
-				result = "<ignore>";
-				chkMap.push(result);
-				continue;
-			}
-			var symbol = result.symbol !== "" ? result.symbol : "<parse_error>";
-			chkMap.push(symbol);
-
-			if (parser.debug) {
-
-				if (!result.valid) {
-					string += "<p>Invalid use of expression on line " + (i + 1) + ".<br>";
-				}
-
-				string += "Generating parse table for " + map[i] + ".</p>";
-				string += "<table>";
-				string += "<tr><th>Stack</th><th>Input Buffer</th><th>Next</th><th>Action</th></tr>";
-				for (var j = 0; j < parser.tmp.stack.length; j++) {
-
-					string += "<tr><td>" + parser.tmp.stack[j].buffer + "&nbsp" + "</td><td>" + parser.tmp.stack[j].unscanned + "&nbsp" + "</td><td>" +
-					parser.tmp.stack[j].next + "&nbsp" + "</td><td>" + parser.tmp.stack[j].action + "&nbsp" + "</td></tr>";
-				}
-				string += "</table><hr><br>";
-			}
-			else {
-
-				if (result.valid)
-					string += "Line [" + (i + 1) + "]: " + result.symbol + "\n";
-				else {
-					string+= "Line [" + (i + 1) + "]: Failed parse\n";
-					break;
-				}
-			}
-		}
-		string = $("#" + console).contents().find('html').html() + string;
-		$("#" + console).contents().find('html').html(string);
-		return chkMap;
-	},
-
-	detokenize: function (line) {
-
-		var tokens = [];
-		var begin = false;
-		var token = "";
-		for (var i = 0; i < line.length; i++) {
-
-			if (line[i] == "{") {
-				begin = true;
-				continue;
-			}
-			else if (line[i] == "}" && begin) {
-				begin = false;
-				tokens.push(token);
-				token = "";
-			}
-
-			if (begin) {
-				token += line[i];
-			}
-		}
-
-		return tokens;
 	}
 }
