@@ -1,4 +1,7 @@
 analyzer.js
 ===========
 
-Programming Language Converter tool using Javascript
+Programming Language Converter for Javascript
+
+![alt tag](http://i.imgur.com/fcwJueC.png)
+
