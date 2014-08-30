@@ -1,0 +1,1 @@
+dictionary.search.equivalentWord("C-language", dictionary.pages.findWord("float", "Python-language"))

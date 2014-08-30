@@ -1,0 +1,130 @@
+// @license magnet:?xt=urn:btih:1f739d935676111cfff4b4693e3816e664797050&dn=gpl-3.0.txt GPL-v3-or-Later
+/**
+ * This is the application Javascript part of the whole converter (similar to main of a C program)
+ * This application combines several Javascript libraries in order to make the converter
+ * look more intuitive and useful out of the box.
+ *
+ * Aside from the 4 modules included on the package, the converter uses the following Javascript libraries
+ * as a part of its user interface.
+ *
+ * 1. JQuery (http://jquery.com/)
+ * 2. EditArea (http://www.cdolivet.com/editarea/)
+ *
+ * Further-more it needs the following libraries/tools for the codes it generates in order for it to run/compile
+ *
+ * 1. Boehm G.C (http://www.hboehm.info/gc/)
+ * 2. GNU Compiler Collection (https://gcc.gnu.org/)
+ */
+
+$( document ).ready(function() {
+
+	dictionary.cpp.initialize();
+	dictionary.python.initialize();
+	var textareas = document.getElementsByTagName('textarea');
+	var count = textareas.length;
+	for(var i=0;i<count;i++){
+	    textareas[i].onkeydown = function(e){
+
+	    	var keyCode = -1;
+	    	if (e) {
+	    		keyCode = e.keyCode;
+	    	}
+	    	else if (event) {
+	    		keyCode = event.which;
+	    	}
+
+	        if(keyCode == 9){
+	            e.preventDefault();
+	            var s = this.selectionStart;
+	            this.value = this.value.substring(0,this.selectionStart) + "\t" + this.value.substring(this.selectionEnd);
+	            this.selectionEnd = s+1;
+	        }
+	        else {
+
+	        	return true;
+	        }
+	    }
+	}
+
+	$('#chosenFile').on("change", function(){
+
+		$("#fileName").val($('input[type=file]').val());
+		var file = document.getElementById("chosenFile").files[0];
+		if (file) {
+		    var reader = new FileReader();
+		    reader.readAsText(file, "UTF-8");
+		    reader.onload = function (evt) {
+		        document.getElementById("inputText").value = evt.target.result;
+		        editAreaLoader.setValue("inputText", evt.target.result);
+		    }
+		    reader.onerror = function (evt) {
+		        document.getElementById("inputText").value = "error reading file";
+		        editAreaLoader.setValue("inputText", "error reading file");
+		    }
+		}
+	});
+
+	$("#convertButton").on("click", function(){
+
+		document.getElementById("inputText").value = editAreaLoader.getValue("inputText");
+		var value = document.getElementById("inputText").value;
+		var res = -1;
+		if (value == "")
+			res = confirm("You are submitting an empty output\n\tDo you wish to proceed?");
+
+		if (res) {
+
+			try {
+
+				var resMap = $('input[type=file]').val();
+				var map = tokenizer.tokenize(value.replace(/\t/g, "    "));
+				var resultant = "<style>td, th {border: 1px solid black;}</style>";
+				resultant += "<p>Generating Tokens from String...\n</p>";
+				resultant += "<p>Showing result...</p>";
+				resultant += "<hr>";
+				resultant += "<table><tr><td colspan=2>Tokens</td></tr>";
+				for (var i = 0; i < map.length; i++) {
+					resultant += "<tr><td> " + (i + 1) + ". </td><td>" + map[i] + "&nbsp" + "</td></tr>";
+				}
+				resultant += "</table>";
+				resultant += "<hr>";
+				$("#console").contents().find('html').html(resultant);
+
+				var symbol = parser.check_displayTable("console", map);
+				analyzer.getTokensFromString(map, symbol);
+				document.getElementById('output').value = analyzer.variables.result;
+				editAreaLoader.setValue("output", analyzer.variables.result);
+			}
+			catch (exception) {
+
+				alert(exception);
+			}
+		}
+	});
+
+	editAreaLoader.init({
+		id: "inputText"	// id of the textarea to transform
+		,start_highlight: true	// if start with highlight
+		,allow_resize: "x"
+		,allow_toggle: true
+		,word_wrap: true
+		,language: "en"
+		,syntax: "python"
+	});
+
+	editAreaLoader.init({
+		id: "output"	// id of the textarea to transform
+		,start_highlight: true	// if start with highlight
+		,allow_resize: "x"
+		,allow_toggle: true
+		,word_wrap: true
+		,language: "en"
+		,syntax: "c"
+	});
+
+	setTimeout(function(){
+		$("#frame_inputText").width("48.3%")
+		$("#frame_output").width("48.3%");
+	}, 1000);
+});
+// @license-end
