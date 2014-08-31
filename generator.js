@@ -186,7 +186,8 @@ var generator = {
 			symbol: "symb",
 			constant: "const",
 			reserveWord: "res",
-			stringConstant: "sConst"
+			stringConstant: "sConst",
+			tab: "tab",
 		}
 
 
@@ -502,7 +503,6 @@ var generator = {
                 var currentSelector = values[j].replace(/\d+/g, '');
                 var currentIndex 	= values[j].replace(/[^0-9.]/g, '');
                 tokens[j] = currentSelector;
-
                 if (currentSelector == generator.enums.token.keyword) {
 
                     values[j] = tokenizer.token.keyword[currentIndex - 1].value;
@@ -527,6 +527,9 @@ var generator = {
 
                     values[j] = "\""
                     + tokenizer.token.string[currentIndex - 1].value + "\"";
+                }
+                else if (currentSelector == generator.enums.token.tab) {
+                	values[j] = "\t";
                 }
             }
 

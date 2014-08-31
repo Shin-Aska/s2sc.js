@@ -274,7 +274,6 @@ var parser = {
 				stack[i] = tokenizer.token.reserveWord[currentIndex - 1].value;
 			}
 		}
-
 		do {
 
 			var startFlag = -1;

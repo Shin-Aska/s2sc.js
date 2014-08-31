@@ -42,7 +42,8 @@ var s2sc =  {
 		s2sc.clear();
 		dictionary.c.initialize();
 		dictionary.python.initialize();
-		s2sc.map = tokenizer.tokenize(data);
+		s2sc.map = tokenizer.python.tokenize(data);
+		//alert(s2sc.map + "\n=========\n" + tokenizer.python.tokenize(data));
 		s2sc.symbol = [];
 
 		for (var i = 0; i < s2sc.map.length; i++) {

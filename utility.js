@@ -61,9 +61,9 @@ var isEquation = function(arr) {
 		catch (ex) {
 
 			var found = false;
-			for (var m = 0; m < tokenizer.list.symbol.length; m++) {
+			for (var m = 0; m < tokenizer.token.symbol.length; m++) {
 
-				if (tokenizer.list.symbol[m] == n[i]) {
+				if (tokenizer.token.symbol[m] == n[i]) {
 					found = true;
 					break;
 				}
