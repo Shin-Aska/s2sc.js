@@ -5,15 +5,11 @@ Programming Language Converter for Javascript
 
 ![alt tag](http://i.imgur.com/fcwJueC.png)
 
-**s2sc** (*Source to Source Converter*) is a javascript code convertion library
-that aims to allow web browsers understand other programming languages.
+**s2sc** (*Source to Source Converter*) is a javascript code convertion framework
+that aims to connect other programming languages to web browsers.
 
-An in-depth explanation is available on the documentation, as well as instructions
-on how to create your own converter from one programming language to another.
-
-So far, by default it only supports an incomplete Python to C conversion. There are plans 
+By default it only supports an incomplete Python to C conversion. There are plans 
 for vice versa conversion and support for other languages.
-
 
 
 Instructions
