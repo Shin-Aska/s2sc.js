@@ -71,20 +71,20 @@ var parser = {
 		"func <- func + func | func + sConst",
 
 		"decl <- id = result F | id = const F | id = id F",
-		"decl <- id hack F",
+		//"decl <- id hack F",
 
-		"compAsgn <- id += result F | id += const F | id += id F",
+		"cmpAsgn <- id += result F | id += const F | id += id F",
 		"cmpAsgn <- id *= result F | id *= const F | id *= id F",
 		"cmpAsgn <- id -= result F | id -= const F | id -= id F",
 		"cmpAsgn <- id /= result F | id /= const F | id /= id F",
 		"cmpAsgn <- id cmpAsgnHack F",
 
 		// Temporary Hack to get id = id working
-		"hack <- = id F",
-		"cmpAsgnHack <- += id F",
-		"cmpAsgnHack <- -= id F",
-		"cmpAsgnHack <- *= id F",
-		"cmpAsgnHack <- /= id F",
+		//"hack <- = id F",
+		//"cmpAsgnHack <- += id F",
+		//"cmpAsgnHack <- -= id F",
+		//"cmpAsgnHack <- *= id F",
+		//"cmpAsgnHack <- /= id F",
 
 		"strDecl <- id = sConst F | id += sConst F",
 		"funcStrDecl <- strDecl + func",
@@ -104,7 +104,7 @@ var parser = {
 		"paramList <- sConst , result | sConst , id | result , sConst",
 		"paramList <- const , id | id , const | sConst , const",
 		"paramList <- const , result | result , const | const, sConst | const , const",
-		"paramList <- paramList , id | paramList , sConst | paramList , result | paramList , const",
+		"paramList <- paramList , id | paramList , sConst | paramLi st , result | paramList , const",
 
 		// Arithmetic cases
 		"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",
@@ -223,12 +223,12 @@ var parser = {
 
 		var tokens = tokenizer.detokenize(map);
 		var lowestCaseNumber = 2000000;
-		var stack = [];
 		var historyStack = [];
 		var stackIndex = 0;
 		var done = false;
 		var insert = false;
 		var cases = [];
+		var stack = [];
 		var result = Object;
 		result.valid = false;
 		result.symbol = "";
@@ -258,7 +258,8 @@ var parser = {
 		var toleranceCount 		= 0;
 
 		/*
-			Translates token symbols to its original value
+			Translates reserve words and symbols to its original value, in order
+			for the parser to make a distinction on certain grammar rules.
 		*/
 
 		for (var i = 0; i < stack.length; i++) {
@@ -274,144 +275,81 @@ var parser = {
 				stack[i] = tokenizer.token.reserveWord[currentIndex - 1].value;
 			}
 		}
-		do {
 
-			var startFlag = -1;
-			var endFlag = -1;
-			var caseFlag = 0;
-			var representation = "";
-			actionBuffer = false;
-			var next = stack.length == 0 ? "" : stack[0];
+        do {
 
-			for (var i = cases.length - 1; i >= 0; i--) {
+            var cIndex = -1;
+            var lastBuffer = buffer.slice();
+            var next = stack.length == 0 ? "" : stack[0];
+            next = next.replace(/\d+/g, '');
+            actionBuffer = false;
 
-				var stop = false;
+            for (var i = 0; i < cases.length; i++) {
 
-				if (buffer.length < lowestCaseNumber) {
+                var valid = false;
 
-					break;
+				if (cases[i].rule == 0) {
+					valid = true;
 				}
-				else {
-
-					for (var j = 0; j < cases[i].condition.length; j++) {
-
-						for (var k = 0; k < buffer.length; k++) {
-
-							var currentToken = buffer[k].replace(/\d+/g, '');
-
-
-							if (cases[i].condition[caseFlag] == currentToken) {
-
-								caseFlag += 1;
-
-								/*
-									Checks and assigns whether the system has indicated the starting
-									position of the buffer
-								*/
-
-								if (startFlag == -1 && caseFlag < cases[i].condition.length) {
-
-									var valid = false;
-
-									if (cases[i].rule == 0) {
-										valid = true;
-									}
-									else if (cases[i].rule == 1) {
-										if (stack.length == 0)
-											valid = true;
-									}
-
-
-									if (valid) {
-										startFlag = k;
-									}
-									else {
-										caseFlag = 0;
-									}
-								}
-
-
-								/*
-									Checks if the buffer matches the condition case and replaces with the match with the
-									alternative representation
-								*/
-								if (startFlag != -1 && endFlag == -1 && caseFlag == cases[i].condition.length &&
-									cases[i].condition.length <= buffer.length - startFlag) {
-
-									endFlag = startFlag + cases[i].condition.length;
-									stop = true;
-									representation = cases[i].representation;
-									break;
-								}
-								/*
-									This one is like the above except this one is aimed for conditions that only
-									requires one match. [Bug Fix]
-								*/
-								if (startFlag == -1 && endFlag == -1 && caseFlag == cases[i].condition.length && cases[i].condition.length == 1) {
-
-									startFlag = k;
-									endFlag = k + 1;
-									stop = true;
-									representation = cases[i].representation;
-									break;
-								}
-								/*else if (startFlag != -1 && buffer.length >= 4) {
-									startFlag = 1;
-									endFlag = 4;
-									representation = "result";
-									stop = true;
-									break;
-								}*/
-							}
-							else {
-
-								caseFlag = 0;
-								startFlag = -1;
-								endFlag = -1;
-								representation = "";
-							}
-						}
-
-						if (stop)
-							break;
+				else if (cases[i].rule == 1) {
+					if (stack.length == 0 && toleranceCount != 0) {
+                        valid = true;
 					}
+
 				}
 
-				if (stop)
-					break;
-			}
+				if (valid) {
 
+                    buffer = arrayToArrayReplace(buffer, cases[i].condition, Array(cases[i].representation));
+                    if (buffer.toString() != lastBuffer.toString()) {
 
-			if (startFlag != -1 && endFlag != -1) {
+                        cIndex = i;
+                        actionBuffer = true;
+                        break;
+                    }
+				}
+            }
 
-				var stackString = stack.toString();
-				var bufferString = buffer.toString();
-				var removedElements = buffer.splice(startFlag, endFlag - startFlag, representation);
-				parser.tmp.stack.push(
-					new ParseHistoryRow(
-						stackString,
-						bufferString,
-						next,
-						removedElements + " reduce to " + representation
-					)
-				);
-				actionBuffer = true;
-			}
-			else if (stack.length > 0) {
+            if (buffer.toString() == lastBuffer.toString()) {
 
-				parser.tmp.stack.push(new ParseHistoryRow(stack.toString(), buffer.toString(), next, "shift"));
-				buffer.push(stack.splice(0, 1).toString());
-				actionBuffer = true;
-			}
+                if (stack.length > 0) {
 
-			if (actionBuffer == false && toleranceCount < toleranceCountLimit) {
+                    parser.tmp.stack.push(new ParseHistoryRow(stack.toString(), lastBuffer.toString(), next, "shift"));
+                    buffer.push(next);
+                    stack.splice(0, 1);
+                    actionBuffer = true;
+                }
+            }
+            else {
 
-				parser.tmp.stack.push(new ParseHistoryRow(stack.toString(), buffer.toString(), next, ""));
+                if (actionBuffer) {
+
+                    var stackString = stack.toString();
+                    var bufferString = lastBuffer.toString();
+                    var removedElements = cases[cIndex].condition.join(" ");
+                    parser.tmp.stack.push(
+                        new ParseHistoryRow(
+                            stackString,
+                            bufferString,
+                            next,
+                            removedElements + " reduce to " + cases[cIndex].representation
+                        )
+                    );
+                }
+            }
+
+            if (actionBuffer == false && toleranceCount < toleranceCountLimit) {
+
+				//parser.tmp.stack.push(new ParseHistoryRow(stack.toString(), buffer.toString(), next, ""));
 				actionBuffer = true;
 				toleranceCount++;
 			}
 
-		} while (stack.length != 0 || actionBuffer)
+			if (actionBuffer == false && toleranceCount != 0) {
+                parser.tmp.stack.push(new ParseHistoryRow(stack.toString(), buffer.toString(), next, ""));
+			}
+
+        } while (stack.length != 0 || actionBuffer);
 
 		if (buffer.length == 1) {
 			result.valid = true;

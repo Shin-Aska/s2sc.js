@@ -110,3 +110,61 @@ var trimString = function (str) {
 	}
 	return str;
 }
+
+var mergeArrays = function(src, dest, sIndex, eIndex) {
+
+    if (typeof(eIndex) === "undefined") {
+        eIndex = 1;
+    }
+
+    var start = 0;
+    if (sIndex <= 1) {
+        start = sIndex
+    }
+    else {
+        start = sIndex;
+    }
+    return src.slice(0, start).concat(dest).concat(src.slice(sIndex + eIndex));
+}
+
+var arrayToArrayReplace = function (src, cmpValue, rplValue) {
+
+    var srcpy = src.slice();
+
+    var index = 0;
+    var srcpyStartingIndex = -1;
+
+    if (src.length < cmpValue.length) {
+        return srcpy;
+    }
+
+    for (var i = 0; i < srcpy.length; i++) {
+
+        if (srcpy[i] === cmpValue[index]) {
+
+            if (index == 0) {
+                srcpyStartingIndex = i;
+            }
+
+            index++;
+            if (cmpValue.length == index) {
+                break;
+            }
+        }
+        else {
+
+            if (srcpyStartingIndex != -1) {
+                index = 0;
+                srcpyStartingIndex = -1;
+                i--;
+            }
+        }
+    }
+
+    if (srcpyStartingIndex != -1 && cmpValue.length == index) {
+
+        srcpy = mergeArrays(srcpy, rplValue, srcpyStartingIndex, cmpValue.length);
+    }
+    return srcpy;
+}
+

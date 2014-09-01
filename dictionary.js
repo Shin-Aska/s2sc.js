@@ -214,7 +214,16 @@ var dictionary = {
 	},
 
 	c: {
+
+	    initialized: false,
 		initialize: function () {
+
+            if (dictionary.c.initialized) {
+                return;
+            }
+            else {
+                dictionary.c.initialized = true;
+            }
 
             dictionary.pages.addWord(new Word(
 				"toFloat_str", function(value) {
@@ -455,7 +464,15 @@ var dictionary = {
 
 	python: {
 
+        initialized: false,
 		initialize: function() {
+
+            if (dictionary.python.initialized) {
+                return;
+            }
+            else {
+                dictionary.python.initialized = true;
+            }
 
 			dictionary.pages.addWord(new Word(
 				"float", function(value) {

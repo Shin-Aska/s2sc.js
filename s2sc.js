@@ -30,20 +30,21 @@
 var s2sc =  {
 
 	map: null,
-	s2sc: null,
+	symbol: null,
+
 	clear: function() {
 
 		s2sc.map = null;
-		s2sc.map = null;
+		s2sc.symbol = null;
 	},
 
     convert: function(originalLanguage, targetLanguage, data) {
 
 		s2sc.clear();
-		dictionary.c.initialize();
 		dictionary.python.initialize();
+		dictionary.c.initialize();
+
 		s2sc.map = tokenizer.python.tokenize(data);
-		//alert(s2sc.map + "\n=========\n" + tokenizer.python.tokenize(data));
 		s2sc.symbol = [];
 
 		for (var i = 0; i < s2sc.map.length; i++) {
@@ -69,6 +70,11 @@ var s2sc =  {
 
 		c: "C-language",
 		python: "Python-language"
+    },
+
+    parser: {
+
+        initialize: false
     }
 }
 
