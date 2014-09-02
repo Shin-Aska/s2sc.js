@@ -438,11 +438,15 @@ var tokenizer = {
 							for (var j = 0; j < tokenizer.python.token.symbol.length; j++) {
 
 								if (text[i] == tokenizer.python.token.symbol[j]) {
-									var token = tokenizer.insert.token(tokenizer.type[3], lineBuffer);
-									tokenBuffer += "{" + token.id + "}";
-									lineBuffer = "";
-									flag.raiseSymbolFlag();
-									break;
+									if (text[i] != ".") {
+
+										dotCounter = 0;
+										var token = tokenizer.insert.token(tokenizer.type[3], lineBuffer);
+										tokenBuffer += "{" + token.id + "}";
+										lineBuffer = "";
+										flag.raiseSymbolFlag();
+										break;
+									}
 								}
 							}
 						}

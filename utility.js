@@ -1,16 +1,13 @@
 /**
  * This file contains all utility classes and functions that the modules
  * tokenizer, parser, dictionary and generator needs in order to do their operations.
- *
- * Some of these classes and functions here completely rely on Objects that where declared on these modules
- * so even though this part of code is not GPL licensed, be careful which code you copy and paste
  */
 
 var clone = {
 
 	variable: function(vari) {
 
-		return new Variable(vari.name, vari.type, vari.lineDeclared)
+		return new Variable(vari.name, vari.type, vari.lineDeclared, vari.ambigious, vari.temporary);
 	}
 }
 

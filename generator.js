@@ -27,13 +27,22 @@
  *
  */
 
-function Variable (Vname, Vtype, Vline) {
+function Variable (Vname, Vtype, Vline, Vambigious, Vtemp) {
+
+
+	if (typeof(Vambigious) === "undefined") {
+		Vambigious = false;
+	}
+
+	if (typeof(Vtemp) === "undefined") {
+		Vtemp = false;
+	}
 
 	this.name = Vname;
 	this.type = Vtype;
 	this.lineDeclared = Vline;
-	this.ambigious = false;
-	this.temporary = false;
+	this.ambigious = Vambigious;
+	this.temporary = Vtemp;
 }
 
 function Action (Atype) {
@@ -53,9 +62,7 @@ function Action (Atype) {
 		}
 
 		if (!found) {
-			this.state.push(
-				new Variable(variable.name, variable.type, variable.lineDeclared)
-			);
+			this.state.push(clone.variable(variable));
 		}
 	}
 }
@@ -83,13 +90,15 @@ function StackContent () {
 }
 
 
-function Line (Lline, Ltoks, Lval) {
+function Line (Lline, Ltoks, Lval, LtokIDs) {
 
     this.length = Ltoks.length;
 	this.lineNumber = Lline;
 	this.tokens = Ltoks;
 	this.values = Lval;
+	this.id = LtokIDs;
 
+	this.data = "";
 	this.actionStack = [];
 	this.contentStack = [];
 }
@@ -496,6 +505,7 @@ var generator = {
 		for (var i = 0; i < parseData.symbol.length; i++) {
 
             var tokens = tokenizer.detokenize(parseData.map[i]);
+            var tokenIDs = tokens.slice();
             var values = tokens.slice();
 
             for (var j = 0; j < values.length; j++) {
@@ -534,7 +544,7 @@ var generator = {
             }
 
 			var action = new Action(parseData.symbol[i]);
-            var line = new Line(i, tokens, values);
+            var line = new Line(i, tokens.slice(), values, tokenIDs);
             var legal = true;
             if (action.type == generator.enums.action.declaration ||
                 action.type == generator.enums.action.stringDeclaration) {
@@ -603,13 +613,23 @@ var generator = {
 								variable.type != generator.enums.c.data.type.float) {
 
 								try {
+
 									variable.type = isInteger(line.values[j]) ?
 										generator.enums.c.data.type.integer :
 										generator.enums.c.data.type.float;
 									numericVariables += 1;
 								}
 								catch (exception) {
+									legal = false;
+								}
+							}
+							else {
 
+								try {
+									isInteger(line.values[j]);
+								}
+								catch (exception) {
+									legal = false;
 								}
 							}
 						}
@@ -649,6 +669,98 @@ var generator = {
 							/*
 								To-do: Put code refactoring here...
 							*/
+							if (variable.ambigious == false) {
+
+								generator.includer.dataType.ambigious();
+								var foundDeclarationLine = false;
+
+								if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
+
+									for (var j = 0; j < buffer.length; j++) {
+
+										var tmpVariableHolder = null;
+										var foundDecl =  null;
+
+										for (var k = 0; k < buffer[j].actionStack.length; k++) {
+
+											for (var l = 0; l < buffer[j].actionStack[k].state.length; l++) {
+
+												if (buffer[j].actionStack[k].state[l].name == variable.name) {
+													tmpVariableHolder = clone.variable(buffer[j].actionStack[k].state[l]);
+													foundDecl = buffer[j].actionStack[k].type;
+												}
+											}
+										}
+
+										if (foundDeclarationLine == false && tmpVariableHolder != null) {
+
+											for (var k = 0; k < buffer[j].values.length; k++) {
+
+												if (buffer[j].values[k] == variable.name) {
+
+													var content = "";
+													var allocContent = "";
+													foundDeclarationLine = true;
+													buffer[j].contentStack.shift();
+													if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+
+														content += tmpVariableHolder.name + ".charValue";
+														allocContent = "( char * ) calloc(2048, sizeof( char ) )";
+													}
+													else {
+
+														content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+														allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
+													}
+													buffer[j].contentStack.unshift(content + " = " + allocContent);
+													buffer[j].contentStack.unshift("ambigious " + variable.name);
+													buffer[j].contentStack.push("free(" + content + ")");
+													continue;
+												}
+											}
+										}
+										else if (tmpVariableHolder != null) {
+
+											for (var k = 0; k < buffer[j].contentStack.length; k++) {
+
+												var content = "";
+												var currentLine = buffer[j].contentStack[k];
+
+												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+
+													content += tmpVariableHolder.name + ".charValue";
+												}
+												else {
+
+													content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+												}
+
+												for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+														currentLine = currentLine.replace(buffer[j].values[l], buffer[j].id[l]);
+													}
+												}
+
+												currentLine = currentLine.replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+
+												for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+														currentLine = currentLine.replace(buffer[j].id[l], buffer[j].values[l]);
+													}
+												}
+
+												buffer[j].contentStack[k] = currentLine;
+												buffer[j].contentStack.push("free(" + content + ")");
+											}
+										}
+									}
+								}
+
+								variable.ambigious = true;
+							}
+
 							generator.refactor.variableList[variable.lineDeclared] = variable;
 						}
 
@@ -724,8 +836,10 @@ var generator = {
 											contentBuffer.push(identifier.name + ".charValue");
 										}
 										else {
-											contentBuffer.push(identifier.name+ "." + identifier.type + "Value");
+											contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
 										}
+
+										//To do: get previous variable type and do a free statement
 									}
 									else {
 										contentBuffer.push(identifier.name);
@@ -1006,9 +1120,99 @@ var generator = {
 					}
 					else {
 
-						/*
-							To-do: Put code refactoring here...
-						*/
+						if (variable.ambigious == false) {
+
+							generator.includer.dataType.ambigious();
+							var foundDeclarationLine = false;
+
+							if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
+
+								for (var j = 0; j < buffer.length; j++) {
+
+									var tmpVariableHolder = null;
+									var foundDecl =  null;
+
+									for (var k = 0; k < buffer[j].actionStack.length; k++) {
+
+										for (var l = 0; l < buffer[j].actionStack[k].state.length; l++) {
+
+											if (buffer[j].actionStack[k].state[l].name == variable.name) {
+												tmpVariableHolder = clone.variable(buffer[j].actionStack[k].state[l]);
+												foundDecl = buffer[j].actionStack[k].type;
+											}
+										}
+									}
+
+									if (foundDeclarationLine == false && tmpVariableHolder != null) {
+
+										for (var k = 0; k < buffer[j].values.length; k++) {
+
+											if (buffer[j].values[k] == variable.name) {
+
+												var content = "";
+												var allocContent = "";
+												foundDeclarationLine = true;
+												buffer[j].contentStack.shift();
+												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+
+													content += tmpVariableHolder.name + ".charValue";
+													allocContent = "( char * ) calloc(2048, sizeof( char ) )";
+												}
+												else {
+
+													content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+													allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
+												}
+												buffer[j].contentStack.unshift(content + " = " + allocContent);
+												buffer[j].contentStack.unshift("ambigious " + variable.name);
+												buffer[j].contentStack.push("free(" + content + ")");
+												continue;
+											}
+										}
+									}
+									else if (tmpVariableHolder != null) {
+
+										for (var k = 0; k < buffer[j].contentStack.length; k++) {
+
+											var content = "";
+											var currentLine = buffer[j].contentStack[k];
+
+											if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+
+												content += tmpVariableHolder.name + ".charValue";
+											}
+											else {
+
+												content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+											}
+
+											for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+													currentLine = currentLine.replace(buffer[j].values[l], buffer[j].id[l]);
+												}
+											}
+
+											currentLine = currentLine.replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+
+											for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+													currentLine = currentLine.replace(buffer[j].id[l], buffer[j].values[l]);
+												}
+											}
+
+											buffer[j].contentStack[k] = currentLine;
+											buffer[j].contentStack.push("free(" + content + ")");
+										}
+									}
+								}
+							}
+
+							variable.ambigious = true;
+						}
+
+
 						generator.refactor.variableList[variable.lineDeclared] = variable;
 					}
 
@@ -1038,7 +1242,7 @@ var generator = {
 							}
 							catch (exception) {
 
-								contentBuffer.push(line.values[j]);
+								legal = false;
 							}
 						}
 						else if (line.tokens[j] == generator.enums.token.identifier) {
@@ -1085,6 +1289,8 @@ var generator = {
 									else {
 										contentBuffer.push(identifier.name+ "." + identifier.type + "Value");
 									}
+
+									//To do: get previous variable type and do a free statement
 								}
 								else {
 									contentBuffer.push(identifier.name);
@@ -1316,6 +1522,7 @@ var generator = {
 				if (!legal) {
 
 					if (generator.options.detailedErrors) {
+						line.contentStack = [];
 						line.contentStack.push("//Invalid Syntax (" + line.values.join(" ") + ")");
 					}
 				}
