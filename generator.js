@@ -701,7 +701,16 @@ var generator = {
 													var content = "";
 													var allocContent = "";
 													foundDeclarationLine = true;
-													buffer[j].contentStack.shift();
+
+													if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+														buffer[j].contentStack.shift();
+													}
+													else {
+														/*
+															Improve refactoring process here
+														*/
+													}
+
 													if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
 
 														content += tmpVariableHolder.name + ".charValue";
@@ -752,13 +761,14 @@ var generator = {
 												}
 
 												buffer[j].contentStack[k] = currentLine;
-												buffer[j].contentStack.push("free(" + content + ")");
 											}
+
+											buffer[j].contentStack.push("free(" + content + ")");
 										}
 									}
-								}
 
-								variable.ambigious = true;
+									variable.ambigious = true;
+								}
 							}
 
 							generator.refactor.variableList[variable.lineDeclared] = variable;
@@ -1152,7 +1162,16 @@ var generator = {
 												var content = "";
 												var allocContent = "";
 												foundDeclarationLine = true;
-												buffer[j].contentStack.shift();
+
+												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+													buffer[j].contentStack.shift();
+												}
+												else {
+													/*
+														Improve refactoring process here
+													*/
+												}
+
 												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
 
 													content += tmpVariableHolder.name + ".charValue";
@@ -1203,13 +1222,13 @@ var generator = {
 											}
 
 											buffer[j].contentStack[k] = currentLine;
-											buffer[j].contentStack.push("free(" + content + ")");
 										}
+										buffer[j].contentStack.push("free(" + content + ")");
 									}
 								}
-							}
 
-							variable.ambigious = true;
+								variable.ambigious = true;
+							}
 						}
 
 
