@@ -706,9 +706,7 @@ var generator = {
 														buffer[j].contentStack.shift();
 													}
 													else {
-														/*
-															Improve refactoring process here
-														*/
+														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(tmpVariableHolder.type + " ", "");
 													}
 
 													if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
@@ -718,12 +716,28 @@ var generator = {
 													}
 													else {
 
-														content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+														content += tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
 														allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
 													}
+
+													for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+														if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+															buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].values[l], buffer[j].id[l]);
+														}
+													}
+
+													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+
+													for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+														if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+															buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].id[l], buffer[j].values[l]);
+														}
+													}
+
 													buffer[j].contentStack.unshift(content + " = " + allocContent);
 													buffer[j].contentStack.unshift("ambigious " + variable.name);
-													buffer[j].contentStack.push("free(" + content + ")");
 													continue;
 												}
 											}
@@ -762,12 +776,43 @@ var generator = {
 
 												buffer[j].contentStack[k] = currentLine;
 											}
-
-											buffer[j].contentStack.push("free(" + content + ")");
 										}
 									}
 
 									variable.ambigious = true;
+								}
+							}
+
+							if (variable.ambigious) {
+
+								if (generator.refactor.variableList[variable.lineDeclared].type != variable.type) {
+
+									var fcontent = "";
+									var content = "";
+									var allocContent = "";
+
+									if (generator.refactor.variableList[variable.lineDeclared].type == generator.enums.c.data.type.string) {
+
+										fcontent += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+									}
+									else {
+
+										fcontent += generator.refactor.variableList[variable.lineDeclared].name + "." + generator.refactor.variableList[variable.lineDeclared].type + "Value";
+									}
+
+									if (variable.type == generator.enums.c.data.type.string) {
+
+										allocContent = "( char * ) calloc(2048, sizeof( char ) )";
+										content += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+									}
+									else {
+
+										allocContent = "( " + variable.type + " * ) calloc(1, sizeof( " + variable.type + " ) )";
+										content += variable.name + "." + variable.type + "Value";
+									}
+
+									line.contentStack.push("free(" + fcontent + ")");
+									line.contentStack.push(content + " = " + allocContent);
 								}
 							}
 
@@ -1167,9 +1212,7 @@ var generator = {
 													buffer[j].contentStack.shift();
 												}
 												else {
-													/*
-														Improve refactoring process here
-													*/
+													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(tmpVariableHolder.type + " ", "");
 												}
 
 												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
@@ -1179,12 +1222,28 @@ var generator = {
 												}
 												else {
 
-													content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+													content += tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
 													allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
 												}
+
+												for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].values[l], buffer[j].id[l]);
+													}
+												}
+
+												buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+
+												for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].id[l], buffer[j].values[l]);
+													}
+												}
+
 												buffer[j].contentStack.unshift(content + " = " + allocContent);
 												buffer[j].contentStack.unshift("ambigious " + variable.name);
-												buffer[j].contentStack.push("free(" + content + ")");
 												continue;
 											}
 										}
@@ -1223,7 +1282,6 @@ var generator = {
 
 											buffer[j].contentStack[k] = currentLine;
 										}
-										buffer[j].contentStack.push("free(" + content + ")");
 									}
 								}
 
@@ -1231,6 +1289,38 @@ var generator = {
 							}
 						}
 
+						if (variable.ambigious) {
+
+							if (generator.refactor.variableList[variable.lineDeclared].type != variable.type) {
+
+								var fcontent = "";
+								var content = "";
+								var allocContent = "";
+
+								if (generator.refactor.variableList[variable.lineDeclared].type == generator.enums.c.data.type.string) {
+
+									fcontent += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+								}
+								else {
+
+									fcontent += generator.refactor.variableList[variable.lineDeclared].name + "." + generator.refactor.variableList[variable.lineDeclared].type + "Value";
+								}
+
+								if (variable.type == generator.enums.c.data.type.string) {
+
+									allocContent = "( char * ) calloc(2048, sizeof( char ) )";
+									content += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+								}
+								else {
+
+									allocContent = "( " + variable.type + " * ) calloc(1, sizeof( " + variable.type + " ) )";
+									content += variable.name + "." + variable.type + "Value";
+								}
+
+								line.contentStack.push("free(" + fcontent + ")");
+								line.contentStack.push(content + " = " + allocContent);
+							}
+						}
 
 						generator.refactor.variableList[variable.lineDeclared] = variable;
 					}
