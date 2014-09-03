@@ -60,7 +60,7 @@ var isEquation = function(arr) {
 			var found = false;
 			for (var m = 0; m < tokenizer.token.symbol.length; m++) {
 
-				if (tokenizer.token.symbol[m] == n[i]) {
+				if (tokenizer.token.symbol[m].value == n[i]) {
 					found = true;
 					break;
 				}

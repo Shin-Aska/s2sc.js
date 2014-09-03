@@ -27,15 +27,6 @@
  *
  */
 
-/**************************************************************
-	Bug List: [Since im not doing git repositories YET imma do this
-
-	1.) Parser doesnt understand double parenthesis and will not correctly shift under this conditions
-
-	ex: ((1)) => Error even though there's  a
-		grammar rules result <- (const) | (result):: ((const)) -> (result) -> result
-**************************************************************/
-
 // Grammar Object Representation in Javascript
 
 function Grammar (equivalent, condition, level, rule) {
@@ -256,6 +247,7 @@ var parser = {
 		var buffer= [];
 		var toleranceCountLimit = 1;
 		var toleranceCount 		= 0;
+		var maxTabSlice = 0;
 
 		/*
 			Translates reserve words and symbols to its original value, in order
@@ -274,7 +266,12 @@ var parser = {
 
 				stack[i] = tokenizer.token.reserveWord[currentIndex - 1].value;
 			}
+			else if (currentSelector == "tab") {
+				maxTabSlice++;
+			}
 		}
+
+		stack = stack.slice(maxTabSlice);
 
         do {
 

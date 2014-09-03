@@ -170,6 +170,13 @@ var generator = {
 
 		action: {
 
+			basic: {
+
+				constant: "const",
+				stringConstant: "sConst",
+				result: "result"
+			},
+
             declaration: "decl",
             stringDeclaration: "strDecl",
             compoundAssignment: "cmpAsgn"
@@ -617,7 +624,6 @@ var generator = {
 									variable.type = isInteger(line.values[j]) ?
 										generator.enums.c.data.type.integer :
 										generator.enums.c.data.type.float;
-									numericVariables += 1;
 								}
 								catch (exception) {
 									legal = false;
@@ -632,6 +638,8 @@ var generator = {
 									legal = false;
 								}
 							}
+
+							numericVariables += 1;
 						}
 						else if (line.tokens[j] == generator.enums.token.reserveWord) {
 
@@ -894,7 +902,6 @@ var generator = {
 											contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
 										}
 
-										//To do: get previous variable type and do a free statement
 									}
 									else {
 										contentBuffer.push(identifier.name);
@@ -1589,8 +1596,6 @@ var generator = {
 						}
 					}
 
-					//line.actionStack.push();
-
 					var paramList = [];
 					var strBuffer = "";
 					var content = "";
@@ -1636,6 +1641,79 @@ var generator = {
 					}
 				}
             }
+			else if (action.type == generator.enums.action.basic.constant ||
+					 action.type == generator.enums.action.basic.stringConstant ||
+					 action.type == generator.enums.action.basic.result) {
+
+				var isStr = action.type == generator.enums.action.basic.stringConstant ? true : false;
+				if (!isStr) {
+
+					var typeCasted = false;
+					var numericVariables = 0;
+
+
+					for (var j = 0; j < line.tokens.length; j++) {
+
+						if (line.tokens[j] == generator.enums.token.identifier) {
+
+							try {
+
+								var tmpVariable =
+									generator.refactor.getVariable(line.values[j]);
+
+								action.pushVariableState(tmpVariable);
+								if (tmpVariable.type == generator.enums.c.data.type.integer ||
+									tmpVariable.type == generator.enums.c.data.type.float ) {
+
+									numericVariables += 1;
+								}
+								else {
+
+									if (!typeCasted) {
+										isStr = true;
+										variable.type = generator.enums.c.data.type.string;
+									}
+
+								}
+							}
+							catch (exception) {
+								legal = false;
+							}
+						}
+						else if (line.tokens[j] == generator.enums.token.constant) {
+
+							try {
+								isInteger(line.values[j]);
+							}
+							catch (exception) {
+								legal = false;
+							}
+
+							numericVariables += 1;
+						}
+						else if (line.tokens[j] == generator.enums.token.reserveWord) {
+
+							if (line.values[j] == generator.enums.c.data.type.integer ||
+								line.values[j] == generator.enums.c.data.type.float) {
+
+								typeCasted = true;
+							}
+						}
+					}
+
+					if ((isStr && numericVariables > 0)) {
+						legal = false;
+					}
+
+					if (legal && !isStr) {
+						//Insert code generation for constants
+					}
+				}
+
+				if (isStr && legal) {
+					//Insert code generation for strings
+				}
+			}
 
             buffer.push(line);
 		}
