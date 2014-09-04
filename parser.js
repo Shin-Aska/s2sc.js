@@ -89,7 +89,7 @@ var parser = {
 
 		//Function Return Types
 		"id <- undefined",
-		"undefined <- kwd ( sConst ) | kwd result | kwd ( paramList )",
+		"undefined <- kwd ( sConst ) | kwd result | kwd ( paramList ) | kwd ( )",
 		"paramList <- result , result | id , id | sConst , sConst",
 		"paramList <- result , id | id , result | id , sConst",
 		"paramList <- sConst , result | sConst , id | result , sConst",

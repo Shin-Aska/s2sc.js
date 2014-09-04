@@ -457,7 +457,7 @@ var dictionary = {
 
 					return this.name + "(" + value.join(" ") + ")";
 				}
-			, new Array("magic", "doh", "C-language"), generator.enums.c.data.type.void));
+			, new Array("magic", "doh", "C-language"), generator.enums.c.data.type.integer));
 			//
 		}
 	},
@@ -496,7 +496,7 @@ var dictionary = {
 				"testFunc", function(value) {
 					return "!!";
 				}
-			, new Array("magic", "doh", "Python-language"), generator.enums.python.data.type.void));
+			, new Array("magic", "doh", "Python-language"), generator.enums.python.data.type.integer));
 		}
 	}
 }

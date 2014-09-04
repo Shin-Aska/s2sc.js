@@ -42,6 +42,7 @@ var isEquation = function(arr) {
 	}
 	var dataType = "";
 	var n = arr.split(" ");
+	var funcTypeParsing = false;
 
 	for (var i = 0; i < n.length; i++) {
 
@@ -79,14 +80,32 @@ var isEquation = function(arr) {
 				}
 				catch (ex2) {
 
-					if (n[i].search("toInteger_str") != -1) {
-						dataType = "int"
+					var cFuncNames = ["toInteger_str", "toFloat_str", "toString_int", "toString_float"];
+					var cFuncDType = ["int", "float", "string", "string"];
+					var cFuncIndex = [-1, -1, -1, -1];
+
+					var candidateIndex = -1;
+
+					for (var j = 0; j < 4; j++) {
+						cFuncIndex[j] = n[i].search(cFuncNames[j]);
 					}
-					else if (n[i].search("toFloat_str") != -1) {
-						dataType = "float"
+
+					for (var j = 0; j < 4; j++) {
+
+						if (candidateIndex == -1) {
+							candidateIndex = j;
+						}
+
+						if (cFuncIndex[candidateIndex] > cFuncIndex[j] && cFuncIndex[j] != -1) {
+							candidateIndex = j;
+						}
+					}
+
+					if (candidateIndex == -1 || cFuncIndex[candidateIndex] == -1) {
+						dataType = "string";
 					}
 					else {
-						dataType = "string";
+						dataType = cFuncDType[candidateIndex];
 					}
 					//dataType = "string";
 				}
