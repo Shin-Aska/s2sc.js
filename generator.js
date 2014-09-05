@@ -577,6 +577,7 @@ var generator = {
 
                 var typeCasted = false;
 				var numericVariables = 0;
+				var checkStack = new ParenthesisStack();
 
 				for (var j = 2; j < line.tokens.length; j++) {
 
@@ -597,7 +598,10 @@ var generator = {
 									variable.type = tmpVariable.type;
 								}
 
-								numericVariables += 1;
+								if (!typeCasted && isStr) {
+									numericVariables += 1;
+								}
+
 							}
 							else {
 
@@ -677,7 +681,9 @@ var generator = {
 								funcType == generator.enums.c.data.type.integer) {
 
 								variable.type = funcType;
-								numericVariables++;
+								if (!typeCasted && isStr) {
+									numericVariables++;
+								}
 							}
 							else {
 
@@ -691,7 +697,9 @@ var generator = {
 										 funcType == generator.enums.c.data.type.float) {
 
 									variable.type = variable.type == generator.enums.c.data.type.float ? float : funcType;
-									numericVariables++;
+									if (!typeCasted && isStr) {
+										numericVariables++;
+									}
 								}
 							}
 						}
@@ -701,19 +709,43 @@ var generator = {
 								legal = false;
 							else if (funcType == generator.enums.c.data.type.string && !typeCasted) {
 								isStr = true;
-								variable.type = generator.enums.c.data.type.string;
 							}
 							else if (funcType == generator.enums.c.data.type.integer ||
 									 funcType == generator.enums.c.data.type.float) {
 
-								variable.type = variable.type == generator.enums.c.data.type.float ? float : funcType;
-								numericVariables++;
+								if (!typeCasted && isStr) {
+									numericVariables++;
+								}
+							}
+						}
+					}
+					else if (line.tokens[j] == generator.enums.token.symbol) {
+
+						if (line.values[j] == generator.enums.symbol.leftParenthesis) {
+
+							if (typeCasted) {
+								checkStack.set++;
+							}
+						}
+						else if (line.values[j] == generator.enums.symbol.rightParenthesis) {
+
+							if (checkStack.set > 0) {
+								checkStack.set--;
+							}
+
+							if (checkStack.count == 0) {
+								typeCasted = false;
+							}
+
+							if (checkStack.set == 0 && checkStack.count > 0) {
+								checkStack.count--;
 							}
 						}
 					}
 				}
 
-				if ((isStr && numericVariables > 0 && !typeCasted) || variable.type == 0) {
+				//alert(isStr + "  " + numericVariables);
+				if ((isStr && numericVariables > 0) || variable.type == 0) {
 
 					legal = false;
 				}
@@ -1750,7 +1782,7 @@ var generator = {
 				var lastContent = "";
 				var typeCasted = false;
 				var numericVariables = 0;
-
+				var checkStack = new ParenthesisStack();
 
 				for (var j = 0; j < line.tokens.length; j++) {
 
@@ -1765,7 +1797,9 @@ var generator = {
 							if (tmpVariable.type == generator.enums.c.data.type.integer ||
 								tmpVariable.type == generator.enums.c.data.type.float ) {
 
-								numericVariables += 1;
+								if (!typeCasted && isStr) {
+									numericVariables += 1;
+								}
 							}
 							else {
 
@@ -1790,7 +1824,7 @@ var generator = {
 							legal = false;
 						}
 
-						numericVariables += 1;
+						numericVariables++;
 					}
 					else if (line.tokens[j] == generator.enums.token.reserveWord) {
 
@@ -1801,9 +1835,52 @@ var generator = {
 							typeCasted = true;
 						}
 					}
+					else if (line.tokens[j] == generator.enums.token.keyword) {
+
+						var funcType = dictionary.pages.findWord(line.values[j], currentLanguage).returnType;
+
+						if (funcType == generator.enums.c.data.type.void)
+							legal = false;
+						else if (funcType == generator.enums.c.data.type.string && !typeCasted) {
+							isStr = true;
+							variable.type = generator.enums.c.data.type.string;
+						}
+						else if (funcType == generator.enums.c.data.type.integer ||
+								funcType == generator.enums.c.data.type.float) {
+
+							if (!typeCasted && isStr) {
+								numericVariables++;
+							}
+						}
+
+					}
+					else if (line.tokens[j] == generator.enums.token.symbol) {
+
+						if (line.values[j] == generator.enums.symbol.leftParenthesis) {
+
+							if (typeCasted) {
+								checkStack.set++;
+							}
+						}
+						else if (line.values[j] == generator.enums.symbol.rightParenthesis) {
+
+							if (checkStack.set > 0) {
+								checkStack.set--;
+							}
+
+							if (checkStack.count == 0) {
+								typeCasted = false;
+							}
+
+							if (checkStack.set == 0 && checkStack.count > 0) {
+								checkStack.count--;
+							}
+						}
+					}
 				}
 
-				if (!typeCasted && numericVariables > 0) {
+				//alert(isStr + "  " + numericVariables);
+				if (isStr && numericVariables > 0) {
 					legal = false;
 				}
 
@@ -2215,7 +2292,7 @@ var generator = {
 										contentBuffer.push(identifier.name + ".charValue");
 									}
 									else {
-										contentBuffer.push(identifier.name+ "." + identifier.type + "Value");
+										contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
 									}
 								}
 								else {
@@ -2474,16 +2551,21 @@ var generator = {
 					//////////////////////////////////////////////////////////////
 					//To do: Make the parameters convert data-types when needed.//
 					//////////////////////////////////////////////////////////////
-					for (var j = 0; j < paramList.length; j++) {
+					/*for (var j = 0; j < paramList.length; j++) {
 
 						try {
-
+							
+							alert(paramList[j]);
 							var link = generator.refactor.getVariable(paramList[j]);
 
 							if (link.ambigious) {
 
 								if (link.type == "int") {
-
+									
+									var list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
+									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+									var result = candidate.function("*" + paramList[j] + ".intValue");
+									alert(result);
 								}
 								else if (link.type == "float") {
 
@@ -2508,7 +2590,7 @@ var generator = {
 						catch (exception2) {
 
 						}
-					}
+					}*/
 
 					var list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
 					var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);

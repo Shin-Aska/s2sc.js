@@ -57,12 +57,7 @@ var parser = {
 
 		// Action check triggers
 
-
-		"func <- kwd sConst F | kwd result F | kwd id F",
-		"func <- func + func | func + sConst",
-
 		"decl <- id = result F | id = const F | id = id F",
-		//"decl <- id hack F",
 
 		"cmpAsgn <- id += result F | id += const F | id += id F",
 		"cmpAsgn <- id *= result F | id *= const F | id *= id F",
@@ -70,12 +65,6 @@ var parser = {
 		"cmpAsgn <- id /= result F | id /= const F | id /= id F",
 		"cmpAsgn <- id cmpAsgnHack F",
 
-		// Temporary Hack to get id = id working
-		//"hack <- = id F",
-		//"cmpAsgnHack <- += id F",
-		//"cmpAsgnHack <- -= id F",
-		//"cmpAsgnHack <- *= id F",
-		//"cmpAsgnHack <- /= id F",
 
 		"strDecl <- id = sConst F | id += sConst F",
 		"funcStrDecl <- strDecl + func",
@@ -85,7 +74,7 @@ var parser = {
 
 		// String Operation
 		"sConst <- id + sConst | sConst + id | sConst + sConst",
-		"sConst <- str ( sConst ) | str result",
+		"sConst <- str ( sConst ) | str result | ( sConst )",
 
 		//Function Return Types
 		"id <- undefined",
