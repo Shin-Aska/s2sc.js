@@ -41,8 +41,14 @@ var s2sc =  {
     convert: function(originalLanguage, targetLanguage, data) {
 
 		s2sc.clear();
-		dictionary.python.initialize();
-		dictionary.c.initialize();
+
+		if (originalLanguage == s2sc.language.c || targetLanguage == s2sc.language.c) {
+			dictionary.c.initialize();
+		}
+
+		if (originalLanguage == s2sc.language.python || targetLanguage == s2sc.language.python) {
+			dictionary.python.initialize();
+		}
 
 		s2sc.map = tokenizer.python.tokenize(data);
 		s2sc.symbol = [];
