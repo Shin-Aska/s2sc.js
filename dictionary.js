@@ -288,49 +288,51 @@ var dictionary = {
 					var paramFormat = "";
 					for (var i = 0; i < parameter.length; i++) {
 
-						if (typeof(parameter[i]) == "object") {
+						if (parameter[i].search("intValue") != -1) {
+							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+						}
+						else if (parameter[i].search("intValue") != -1) {
+							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+						}
+						else if (parameter[i].search("charValue") != -1) {
+							parameter[i] = parameter[i].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+						}
 
-							try {
-								var link = generator.refactor.getVariable(parameter[i].name);
+						try {
+							var link = generator.refactor.getVariable(parameter[i]);
 
-								if (link.ambigious) {
+							if (link.ambigious) {
 
-									if (link.type == "int") {
-										stringFormat += "%d";
-										paramFormat += parameter[i].name + ".intValue";
-									}
-									else if (link.type == "float") {
-										stringFormat += "%f";
-										paramFormat += parameter[i].name + ".floatValue";
-									}
-									else if (link.type == "string") {
-										stringFormat += "%s";
-										paramFormat += parameter[i].name + ".charValue";
-									}
+								if (link.type == "int") {
+									stringFormat += "%d";
+									paramFormat += "*" + link.name + ".intValue";
 								}
-								else {
-
-									if (link.type == "int") {
-										stringFormat += "%d";
-										paramFormat += parameter[i].name;
-									}
-									else if (link.type == "float") {
-										stringFormat += "%f";
-										paramFormat += parameter[i].name;
-									}
-									else if (link.type == "string") {
-										stringFormat += "%s";
-										paramFormat += parameter[i].name;
-									}
+								else if (link.type == "float") {
+									stringFormat += "%f";
+									paramFormat += "*" + link.name + ".floatValue";
+								}
+								else if (link.type == "string") {
+									stringFormat += "%s";
+									paramFormat += "*" + link.name + ".charValue";
 								}
 							}
-							catch (ex) {
+							else {
 
-								paramFormat += parameter[i].name;
-								stringFormat += "%s";
+								if (link.type == "int") {
+									stringFormat += "%d";
+									paramFormat += link.name;
+								}
+								else if (link.type == "float") {
+									stringFormat += "%f";
+									paramFormat += link.name;
+								}
+								else if (link.type == "string") {
+									stringFormat += "%s";
+									paramFormat += link.name;
+								}
 							}
 						}
-						else {
+						catch (ex) {
 
 							paramFormat += parameter[i];
 
@@ -342,8 +344,7 @@ var dictionary = {
 									stringFormat += "%f";
 								}
 							}
-							catch (ex) {
-
+							catch (ex1) {
 
 								try {
 									var result = isEquation(parameter[i]);
@@ -362,6 +363,7 @@ var dictionary = {
 									stringFormat += "%s";
 								}
 							}
+
 						}
 
 						if (i + 1 < parameter.length)

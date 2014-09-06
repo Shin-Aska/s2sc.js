@@ -1048,7 +1048,24 @@ var generator = {
 										stack.count--;
 										var currentFunction = stack.functionName.pop();
 										var currentContentBuffer = stack.content.pop();
-										var operationType = isEquation(currentContentBuffer.data.join(" "));
+
+										var tmpEquation = currentContentBuffer.data.slice();
+
+										for (var k = 0; k < tmpEquation.length; k++) {
+
+											if (tmpEquation[k].search("intValue") != -1) {
+
+												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+											}
+											else if (tmpEquation[k].search("intValue") != -1) {
+												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+											}
+											else if (tmpEquation[k].search("charValue") != -1) {
+												tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+											}
+										}
+
+										var operationType = isEquation(tmpEquation.join(" "));
 										//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
 										if (operationType == generator.enums.c.data.type.string) {
 
@@ -1276,7 +1293,7 @@ var generator = {
 
 						generator.refactor.insertVariable(variable);
 						contentBuffer.push(variable.type);
-						line.contentStack.push("char *" + variable.name + " = " + " (char*)calloc(2048, sizeof(char))");
+						line.contentStack.push("char *" + variable.name + " = " + " ( char * ) calloc(2048, sizeof( char ))");
 					}
 					else {
 
@@ -1327,7 +1344,7 @@ var generator = {
 												}
 												else {
 
-													content += tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+													content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
 													allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
 												}
 
@@ -1419,7 +1436,7 @@ var generator = {
 								else {
 
 									allocContent = "( " + variable.type + " * ) calloc(1, sizeof( " + variable.type + " ) )";
-									content += variable.name + "." + variable.type + "Value";
+									content += "*" + variable.name + "." + variable.type + "Value";
 								}
 
 								line.contentStack.push("free(" + fcontent + ")");
@@ -1500,7 +1517,7 @@ var generator = {
 										contentBuffer.push(identifier.name + ".charValue");
 									}
 									else {
-										contentBuffer.push(identifier.name+ "." + identifier.type + "Value");
+										contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
 									}
 								}
 								else {
@@ -1561,7 +1578,24 @@ var generator = {
 									stack.count--;
 									var currentFunction = stack.functionName.pop();
 									var currentContentBuffer = stack.content.pop();
-									var operationType = isEquation(currentContentBuffer.data.join(" "));
+
+									var tmpEquation = currentContentBuffer.data.slice();
+
+									for (var k = 0; k < tmpEquation.length; k++) {
+
+										if (tmpEquation[k].search("intValue") != -1) {
+
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("intValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("charValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+										}
+									}
+
+									var operationType = isEquation(tmpEquation.join(" "));
 									//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
 									if (operationType == generator.enums.c.data.type.string) {
 
@@ -2017,7 +2051,24 @@ var generator = {
 										stack.count--;
 										var currentFunction = stack.functionName.pop();
 										var currentContentBuffer = stack.content.pop();
-										var operationType = isEquation(currentContentBuffer.data.join(" "));
+
+										var tmpEquation = currentContentBuffer.data.slice();
+
+										for (var k = 0; k < tmpEquation.length; k++) {
+
+											if (tmpEquation[k].search("intValue") != -1) {
+
+												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+											}
+											else if (tmpEquation[k].search("intValue") != -1) {
+												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+											}
+											else if (tmpEquation[k].search("charValue") != -1) {
+												tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+											}
+										}
+
+										var operationType = isEquation(tmpEquation.join(" "));
 										//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
 										if (operationType == generator.enums.c.data.type.string) {
 
@@ -2353,7 +2404,24 @@ var generator = {
 									stack.count--;
 									var currentFunction = stack.functionName.pop();
 									var currentContentBuffer = stack.content.pop();
-									var operationType = isEquation(currentContentBuffer.data.join(" "));
+
+									var tmpEquation = currentContentBuffer.data.slice();
+
+									for (var k = 0; k < tmpEquation.length; k++) {
+
+										if (tmpEquation[k].search("intValue") != -1) {
+
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("intValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("charValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+										}
+									}
+
+									var operationType = isEquation(tmpEquation.join(" "));
 									//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
 									if (operationType == generator.enums.c.data.type.string) {
 
@@ -2551,46 +2619,60 @@ var generator = {
 					//////////////////////////////////////////////////////////////
 					//To do: Make the parameters convert data-types when needed.//
 					//////////////////////////////////////////////////////////////
-					/*for (var j = 0; j < paramList.length; j++) {
+					for (var j = 0; j < paramList.length; j++) {
+
+						if (paramList[j].search("intValue") != -1) {
+							paramList[j] = paramList[j].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+						}
+						else if (paramList[j].search("intValue") != -1) {
+							paramList[j] = paramList[j].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+						}
+						else if (paramList[j].search("charValue") != -1) {
+							paramList[j] = paramList[j].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+						}
 
 						try {
-							
-							alert(paramList[j]);
-							var link = generator.refactor.getVariable(paramList[j]);
 
+							var link = generator.refactor.getVariable(paramList[j]);
 							if (link.ambigious) {
 
 								if (link.type == "int") {
-									
+
 									var list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
 									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-									var result = candidate.function("*" + paramList[j] + ".intValue");
-									alert(result);
+									paramList[j] = candidate.function("*" + paramList[j] + ".intValue");
 								}
 								else if (link.type == "float") {
 
+									var list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
+									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+									paramList[j] = candidate.function("*" + paramList[j] + ".floatValue");
 								}
 								else if (link.type == "string") {
 
+									paramList[j] = paramList[j] + ".charValue";
 								}
 							}
 							else {
 
 								if (link.type == "int") {
 
+									var list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
+									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+									paramList[j] = candidate.function(paramList[j]);
 								}
 								else if (link.type == "float") {
 
-								}
-								else if (link.type == "string") {
-
+									var list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
+									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+									paramList[j] = candidate.function(paramList[j]);
 								}
 							}
 						}
 						catch (exception2) {
 
 						}
-					}*/
+					}
 
 					var list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
 					var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
