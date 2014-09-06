@@ -226,14 +226,22 @@ var tokenizer = {
 
 		token: {
 
-			keyword: ["def", "import", "from", "print", "raw_input", "sys" ,"testFunc"],
-			symbol: ["->", "+=", "-=", "*=", "/=", "+", "-", "*", "/", "=", "(", ")", "<", ">", "{", "}", ",", "."],
+			keyword: [
+				"def", "import", "from", "print", "raw_input", "sys",
+				"testFunc", "pow"
+			],
+			symbol: [
+				"->", "+=", "-=", "*=", "/=", "+", "=",
+				"-", "*", "/", "%", "**", "//",
+				"(", ")", "<", ">", "{", "}", ",", ".", "==", "!=", "<>"
+			],
 			reserveWord: ["int", "float", "str"]
 		},
 
 		tokenize: function(text) {
 
-			//tokenizer.initialize(tokenizer.python);
+			var backupSymbol = tokenizer.python.token.symbol.slice();
+			tokenizer.python.token.symbol.sort(function(a, b){ return a.length > b.length ? -1 : 1;});
 			var lines = [];
 			var lineBuffer = "";
 			var tokenBuffer = "";
@@ -580,6 +588,7 @@ var tokenizer = {
 
 			}
 
+			tokenizer.python.token.symbol = backupSymbol;
 			return lines;
 		}
 	},

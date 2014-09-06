@@ -43,6 +43,19 @@ var isEquation = function(arr) {
 	var dataType = "";
 	var n = arr.split(" ");
 	var funcTypeParsing = false;
+	var floatRepresentation = "";
+	var funcRepresentation1 = "";
+	var funcRepresentation2 = "";
+	if (generator.options.useDoubleInsteadOfFloat) {
+		floatRepresentation = "double";
+		funcRepresentation1 = "toDouble_str";
+		funcRepresentation2 = "toString_double";
+	}
+	else {
+		floatRepresentation = "float";
+		funcRepresentation1 = "toFloat_str";
+		funcRepresentation2 = "toString_float";
+	}
 
 	for (var i = 0; i < n.length; i++) {
 
@@ -52,7 +65,7 @@ var isEquation = function(arr) {
 		try {
 
 			var tmp = generator.refactor.getVariable(n[i]);
-			if ((tmp.type == "int" || tmp.type == "float") && (dataType != "string" || dataType == "")) {
+			if ((tmp.type == "int" || tmp.type == floatRepresentation) && (dataType != "string" || dataType == "")) {
 				dataType = tmp.type;
 			}
 		}
@@ -72,7 +85,7 @@ var isEquation = function(arr) {
 				try {
 
 					if (!isInteger(n[i]) && dataType != "string") {
-						dataType = "float";
+						dataType = floatRepresentation;
 					}
 					else if (dataType == "") {
 						dataType = "int";
@@ -80,10 +93,9 @@ var isEquation = function(arr) {
 				}
 				catch (ex2) {
 
-					var cFuncNames = ["toInteger_str", "toFloat_str", "toString_int", "toString_float"];
-					var cFuncDType = ["int", "float", "string", "string"];
+					var cFuncNames = ["toInteger_str", funcRepresentation1, "toString_int", funcRepresentation2];
+					var cFuncDType = ["int", floatRepresentation, "string", "string"];
 					var cFuncIndex = [-1, -1, -1, -1];
-
 					var candidateIndex = -1;
 
 					for (var j = 0; j < 4; j++) {
@@ -96,15 +108,18 @@ var isEquation = function(arr) {
 							candidateIndex = j;
 						}
 
-						if (cFuncIndex[candidateIndex] > cFuncIndex[j] && cFuncIndex[j] != -1) {
+						if (cFuncIndex[j] != -1 && (cFuncIndex[candidateIndex] > cFuncIndex[j] || cFuncIndex[candidateIndex] == -1)) {
+
 							candidateIndex = j;
 						}
 					}
 
 					if (candidateIndex == -1 || cFuncIndex[candidateIndex] == -1) {
+
 						dataType = "string";
 					}
 					else {
+
 						dataType = cFuncDType[candidateIndex];
 					}
 					//dataType = "string";

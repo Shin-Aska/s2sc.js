@@ -99,7 +99,16 @@ var parser = {
 		"difference <- id - id | const - const | id - const | const - id | result - id | id - result | result - const | const - result",
 		"difference <- difference - id | difference - const | id - difference | const - difference | difference - result | result - difference | result - result",
 
-		"result <- product | quotient | sum | difference | ( const ) | ( result ) | ( id )"
+		"remainder <- id % id | const % const | id % const | const % id | result % id | id % result | result % const | const % result",
+		"remainder <- difference % id | difference % const | id % difference | const % difference | difference % result | result % difference | result % result",
+
+		"exp <- id ** id | const ** const | id ** const | const ** id | result ** id | id ** result | result ** const | const ** result",
+		"exp <- difference ** id | difference ** const | id ** difference | const ** difference | difference ** result | result ** difference | result ** result",
+
+		"floorQuotient <- id // id | const // const | id // const | const // id | result // id | id // result | result // const | const // result",
+		"floorQuotient <- difference // id | difference // const | id // difference | const // difference | difference // result | result // difference | result // result",
+
+		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id )"
 
 
 	],

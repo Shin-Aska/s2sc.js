@@ -225,13 +225,25 @@ var dictionary = {
                 dictionary.c.initialized = true;
             }
 
-            dictionary.pages.addWord(new Word(
-				"toFloat_str", function(value) {
+			if (generator.options.useDoubleInsteadOfFloat) {
+				dictionary.pages.addWord(new Word(
+					"toDouble_str", function(value) {
 
-					generator.includer.function.parser.float.string();
-					return this.name + "(" + value + ")";
-				}
-			, new Array("string-only", "data-type-conversion", "C-language"), generator.enums.c.data.type.float));
+						generator.includer.function.parser.float.string();
+						return this.name + "(" + value + ")";
+					}
+				, new Array("string-only", "data-type-conversion", "C-language"), generator.enums.c.data.type.float));
+			}
+			else {
+				dictionary.pages.addWord(new Word(
+					"toFloat_str", function(value) {
+
+						generator.includer.function.parser.float.string();
+						return this.name + "(" + value + ")";
+					}
+				, new Array("string-only", "data-type-conversion", "C-language"), generator.enums.c.data.type.float));
+			}
+
 
 			dictionary.pages.addWord(new Word(
 				"toInteger_str", function(value) {
@@ -241,13 +253,26 @@ var dictionary = {
 				}
 			, new Array("string-only", "data-type-conversion", "C-language"), generator.enums.c.data.type.integer));
 
-			dictionary.pages.addWord(new Word(
-				"toString_float", function(value) {
+			if (generator.options.useDoubleInsteadOfFloat) {
 
-					generator.includer.function.parser.string.float();
-					return this.name + "(" + value + ")";
-				}
-			, new Array("float-only", "data-type-conversion", "C-language"), generator.enums.c.data.type.string));
+				dictionary.pages.addWord(new Word(
+					"toString_double", function(value) {
+
+						generator.includer.function.parser.string.float();
+						return this.name + "(" + value + ")";
+					}
+				, new Array("float-only", "data-type-conversion", "C-language"), generator.enums.c.data.type.string));
+			}
+			else {
+
+				dictionary.pages.addWord(new Word(
+					"toString_float", function(value) {
+
+						generator.includer.function.parser.string.float();
+						return this.name + "(" + value + ")";
+					}
+				, new Array("float-only", "data-type-conversion", "C-language"), generator.enums.c.data.type.string));
+			}
 
 			dictionary.pages.addWord(new Word(
 				"toString_int", function(value) {
@@ -455,6 +480,13 @@ var dictionary = {
 			,new Array("output", "manipulation", "C-language"), generator.enums.c.data.type.void));
 
 			dictionary.pages.addWord(new Word(
+				"pow", function(parameter) {
+
+					return this.name + "(" + parameter.join(" ") + ")";
+				}
+			, new Array("math-operation", "exponent", "C-language"), generator.enums.c.data.type.float));
+
+			dictionary.pages.addWord(new Word(
 				"testFunc11", function(value) {
 
 					return this.name + "(" + value.join(" ") + ")";
@@ -493,6 +525,21 @@ var dictionary = {
 
 				}
 			, new Array("integer-or-float-or-string", "data-type-conversion", "Python-language"), generator.enums.python.data.type.string));
+
+			dictionary.pages.addWord(new Word(
+				"pow", function(parameter) {
+
+					var paramText = "";
+					for (var i = 0; i < parameter.length; i++) {
+						paramText += parameter[i];
+						if (i + 1 != parameter.length) {
+							paramText += ", ";
+						}
+					}
+
+					return this.name + "(" + paramText + ")";
+				}
+			, new Array("math-operation", "exponent", "Python-language"), generator.enums.python.data.type.float));
 
 			dictionary.pages.addWord(new Word(
 				"testFunc", function(value) {

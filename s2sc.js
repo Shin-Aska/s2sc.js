@@ -42,6 +42,10 @@ var s2sc =  {
 
 		s2sc.clear();
 
+		if (generator.options.useDoubleInsteadOfFloat) {
+			generator.enums.c.data.type.float = "double";
+		}
+
 		if (originalLanguage == s2sc.language.c || targetLanguage == s2sc.language.c) {
 			dictionary.c.initialize();
 		}
