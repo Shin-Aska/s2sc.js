@@ -482,6 +482,7 @@ var dictionary = {
 			dictionary.pages.addWord(new Word(
 				"pow", function(parameter) {
 
+					generator.includer.function.math.pow();
 					return this.name + "(" + parameter.join(" ") + ")";
 				}
 			, new Array("math-operation", "exponent", "C-language"), generator.enums.c.data.type.float));
