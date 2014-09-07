@@ -1909,7 +1909,8 @@ var generator = {
 			else if (action.type == generator.enums.action.basic.constant ||
 					 action.type == generator.enums.action.basic.stringConstant ||
 					 action.type == generator.enums.action.basic.result ||
-					 action.type == generator.enums.action.basic.id) {
+					 action.type == generator.enums.action.basic.id ||
+					 action.type == generator.enums.action.compoundAssignment) {
 
 				var isStr = action.type == generator.enums.action.basic.stringConstant ? true : false;
 				var contentBuffer = [];
