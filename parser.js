@@ -38,11 +38,13 @@ function ParseHistoryRow (buffer, unscanned, next, action) {
 
 
 
+
+
 var parser = {
 
 	grammar : [
 
-		// Action check triggers
+		// Action check trigger
 
 		"decl <- id = result F | id = const F | id = id F",
 
