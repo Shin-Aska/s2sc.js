@@ -50,8 +50,9 @@ var parser = {
 		"cmpAsgn <- id *= result F | id *= const F | id *= id F",
 		"cmpAsgn <- id -= result F | id -= const F | id -= id F",
 		"cmpAsgn <- id /= result F | id /= const F | id /= id F",
+		"cmpAsgn <- id += sConst",
 
-		"strDecl <- id = sConst F | id += sConst F",
+		"strDecl <- id = sConst F",
 		"funcStrDecl <- strDecl + func",
 
 		// For decimal

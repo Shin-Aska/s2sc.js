@@ -2001,6 +2001,9 @@ var generator = {
 							}
 						}
 					}
+					else if (line.tokens[j] == generator.enums.token.stringConstant) {
+						isStr = true;
+					}
 				}
 
 				//alert(isStr + "  " + numericVariables);
@@ -2745,6 +2748,11 @@ var generator = {
 					var paramList = [];
 					var strBuffer = "";
 					var content = "";
+					var sIndex = 0;
+					if (action.type == generator.enums.action.compoundAssignment)  {
+						sIndex = 2;
+					}
+
 
 					for (var j = 0; j < contentBuffer.length; j++) {
 
@@ -2774,7 +2782,8 @@ var generator = {
 					//////////////////////////////////////////////////////////////
 					//To do: Make the parameters convert data-types when needed.//
 					//////////////////////////////////////////////////////////////
-					for (var j = 0; j < paramList.length; j++) {
+
+					for (var j = sIndex; j < paramList.length; j++) {
 
 						if (paramList[j].search("intValue") != -1) {
 							paramList[j] = paramList[j].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
@@ -2829,12 +2838,21 @@ var generator = {
 						}
 					}
 
-					var list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
-					var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-					var result = candidate.function(paramList);
+					var list;
+					var candidate;
+					var result;
+
+					if (action.type == generator.enums.action.compoundAssignment) {
+						result = dictionary.pages.findWord("sprintf", "C-language").function(paramList[0], paramList.slice(2));
+					}
+					else {
+
+						list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
+						candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+						result = candidate.function(paramList);
+					}
 
 					line.contentStack.push(result);
-
 				}
 
 			}
