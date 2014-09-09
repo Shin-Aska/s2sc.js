@@ -2748,11 +2748,6 @@ var generator = {
 					var paramList = [];
 					var strBuffer = "";
 					var content = "";
-					var sIndex = 0;
-					if (action.type == generator.enums.action.compoundAssignment)  {
-						sIndex = 2;
-					}
-
 
 					for (var j = 0; j < contentBuffer.length; j++) {
 
@@ -2783,7 +2778,7 @@ var generator = {
 					//To do: Make the parameters convert data-types when needed.//
 					//////////////////////////////////////////////////////////////
 
-					for (var j = sIndex; j < paramList.length; j++) {
+					for (var j = 0; j < paramList.length; j++) {
 
 						if (paramList[j].search("intValue") != -1) {
 							paramList[j] = paramList[j].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
@@ -2792,7 +2787,7 @@ var generator = {
 							paramList[j] = paramList[j].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
 						}
 						else if (paramList[j].search("charValue") != -1) {
-							paramList[j] = paramList[j].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+							paramList[j] = paramList[j].slice(0, 1).replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
 						}
 
 						try {
@@ -2843,7 +2838,8 @@ var generator = {
 					var result;
 
 					if (action.type == generator.enums.action.compoundAssignment) {
-						result = dictionary.pages.findWord("sprintf", "C-language").function(paramList[0], paramList.slice(2));
+
+						result = dictionary.pages.findWord("sprintf", "C-language").function(paramList[0], paramList.slice(0, 1).concat(paramList.slice(2)));
 					}
 					else {
 

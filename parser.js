@@ -50,7 +50,7 @@ var parser = {
 		"cmpAsgn <- id *= result F | id *= const F | id *= id F",
 		"cmpAsgn <- id -= result F | id -= const F | id -= id F",
 		"cmpAsgn <- id /= result F | id /= const F | id /= id F",
-		"cmpAsgn <- id += sConst",
+		"cmpAsgn <- id += sConst F",
 
 		"strDecl <- id = sConst F",
 		"funcStrDecl <- strDecl + func",

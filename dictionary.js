@@ -325,7 +325,7 @@ var dictionary = {
 								}
 								else if (link.type == "string") {
 									stringFormat += "%s";
-									paramFormat += "*" + link.name + ".charValue";
+									paramFormat += link.name + ".charValue";
 								}
 							}
 							else {

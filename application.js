@@ -108,7 +108,7 @@ $( document ).ready(function() {
 		,start_highlight: true	// if start with highlight
 		,allow_resize: "x"
 		,allow_toggle: true
-		,word_wrap: true
+		,word_wrap: false
 		,language: "en"
 		,syntax: "python"
 	});
@@ -118,9 +118,10 @@ $( document ).ready(function() {
 		,start_highlight: true	// if start with highlight
 		,allow_resize: "x"
 		,allow_toggle: true
-		,word_wrap: true
+		,word_wrap: false
 		,language: "en"
 		,syntax: "c"
+		,is_editable: false
 	});
 
 	setTimeout(function(){
