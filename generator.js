@@ -2787,7 +2787,7 @@ var generator = {
 							paramList[j] = paramList[j].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
 						}
 						else if (paramList[j].search("charValue") != -1) {
-							paramList[j] = paramList[j].slice(0, 1).replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+							paramList[j] = paramList[j].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
 						}
 
 						try {

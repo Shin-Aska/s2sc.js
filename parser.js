@@ -34,17 +34,9 @@ function ParseHistoryRow (buffer, unscanned, next, action) {
 	this.action = action;
 }
 
-// Trims the string and removes the whitespaces from beginning and end of a sentence.
-
-
-
-
-
 var parser = {
 
 	grammar : [
-
-		// Action check trigger
 
 		"decl <- id = result F | id = const F | id = id F",
 

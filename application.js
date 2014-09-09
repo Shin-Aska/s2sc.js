@@ -104,8 +104,8 @@ $( document ).ready(function() {
 	});
 
 	editAreaLoader.init({
-		id: "inputText"	// id of the textarea to transform
-		,start_highlight: true	// if start with highlight
+		id: "inputText"
+		,start_highlight: true
 		,allow_resize: "x"
 		,allow_toggle: true
 		,word_wrap: false
@@ -114,8 +114,8 @@ $( document ).ready(function() {
 	});
 
 	editAreaLoader.init({
-		id: "output"	// id of the textarea to transform
-		,start_highlight: true	// if start with highlight
+		id: "output"
+		,start_highlight: true
 		,allow_resize: "x"
 		,allow_toggle: true
 		,word_wrap: false
