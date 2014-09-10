@@ -169,7 +169,8 @@ var generator = {
 				constant: "const",
 				stringConstant: "sConst",
 				result: "result",
-				id: "id"
+				id: "id",
+				increment: "incr",
 			},
 
             declaration: "decl",
@@ -843,7 +844,7 @@ var generator = {
 														}
 													}
 
-													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(" + content + ")");
 
 													for (var l = 0; l < buffer[j].tokens.length; l++) {
 
@@ -871,7 +872,7 @@ var generator = {
 												}
 												else {
 
-													content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+													content += "(*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value)";
 												}
 
 												for (var l = 0; l < buffer[j].tokens.length; l++) {
@@ -1035,7 +1036,7 @@ var generator = {
 											contentBuffer.push(identifier.name + ".charValue");
 										}
 										else {
-											contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
+											contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
 										}
 
 									}
@@ -1410,7 +1411,7 @@ var generator = {
 													}
 												}
 
-												buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+												buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(" + content + ")");
 
 												for (var l = 0; l < buffer[j].tokens.length; l++) {
 
@@ -1419,7 +1420,7 @@ var generator = {
 													}
 												}
 
-												buffer[j].contentStack.unshift(content + " = " + allocContent);
+												buffer[j].contentStack.unshift(content.substring(1) + " = " + allocContent);
 												buffer[j].contentStack.unshift("ambigious " + variable.name);
 												continue;
 											}
@@ -1438,7 +1439,7 @@ var generator = {
 											}
 											else {
 
-												content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+												content += "(*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value)";
 											}
 
 											for (var l = 0; l < buffer[j].tokens.length; l++) {
@@ -1598,7 +1599,7 @@ var generator = {
 										contentBuffer.push(identifier.name + ".charValue");
 									}
 									else {
-										contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
+										contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
 									}
 								}
 								else {
@@ -1897,6 +1898,7 @@ var generator = {
 					 action.type == generator.enums.action.basic.stringConstant ||
 					 action.type == generator.enums.action.basic.result ||
 					 action.type == generator.enums.action.basic.id ||
+					 action.type == generator.enums.action.basic.increment ||
 					 action.type == generator.enums.action.compoundAssignment) {
 
 				var isStr = action.type == generator.enums.action.basic.stringConstant ? true : false;
@@ -2109,7 +2111,7 @@ var generator = {
 											contentBuffer.push(identifier.name + ".charValue");
 										}
 										else {
-											contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
+											contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
 										}
 
 									}
@@ -2495,7 +2497,7 @@ var generator = {
 										contentBuffer.push(identifier.name + ".charValue");
 									}
 									else {
-										contentBuffer.push("*" + identifier.name+ "." + identifier.type + "Value");
+										contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
 									}
 								}
 								else {

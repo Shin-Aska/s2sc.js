@@ -82,6 +82,7 @@ var parser = {
 		"remainder <- id % id | const % const | id % const | const % id | result % id | id % result | result % const | const % result",
 		"remainder <- difference % id | difference % const | id % difference | const % difference | difference % result | result % difference | result % result",
 
+		"incr <- id ++ | ++ id",
 		"exp <- id ** id | const ** const | id ** const | const ** id | result ** id | id ** result | result ** const | const ** result",
 		"exp <- difference ** id | difference ** const | id ** difference | const ** difference | difference ** result | result ** difference | result ** result",
 
