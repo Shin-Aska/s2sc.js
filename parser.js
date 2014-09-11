@@ -56,6 +56,13 @@ var parser = {
 		"sConst <- id + sConst | sConst + id | sConst + sConst",
 		"sConst <- str ( sConst ) | str result | ( sConst )",
 
+		//Function Defintion
+		"funcDef <- def id ( paramList ) : | funcDefInit :",
+		"funcDefInit <- def id ( id )",
+
+		//Class Definition
+		"classDef <- class id :",
+
 		//Function Return Types
 		"id <- undefined",
 		"undefined <- kwd ( sConst ) | kwd result | kwd ( paramList ) | kwd ( )",

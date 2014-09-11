@@ -214,15 +214,15 @@ var tokenizer = {
 		token: {
 
 			keyword: [
-				"def", "import", "from", "print", "raw_input", "sys",
+				"import", "from", "print", "raw_input", "sys",
 				"testFunc", "pow"
 			],
 			symbol: [
 				"->", "+=", "-=", "*=", "/=", "+", "=", "++", "--",
 				"-", "*", "/", "%", "**", "//",
-				"(", ")", "<", ">", "{", "}", ",", ".", "==", "!=", "<>"
+				"(", ")", "<", ">", "{", "}", ",", ".", "==", "!=", "<>", ":",
 			],
-			reserveWord: ["int", "float", "str"]
+			reserveWord: ["int", "float", "str", "def", "class"]
 		},
 
 		tokenize: function(text) {
