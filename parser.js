@@ -73,6 +73,16 @@ var parser = {
 		"paramList <- const , result | result , const | const, sConst | const , const",
 		"paramList <- paramList , id | paramList , sConst | paramLi st , result | paramList , const",
 
+		// Boolean cases
+		"boolStmt <- id < id | id > id | id == id",
+		"boolStmt <- const < const | const > const | const == const",
+		"boolStmt <- id < const | id > const | id == const",
+		"boolStmt <- const < id | const > id | const == id",
+		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt",
+		"boolStmt <- result < const F | result > const F | result == const F",
+		"boolStmt <- result < id F | result > id F | result == id F",
+		"boolStmt <- result < result F | result > result F | result == result F",
+
 		// Arithmetic cases
 		"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",
 		"product <- product * id | product * const | id * product | const * product | product * product | product * result | result * product | result * result",

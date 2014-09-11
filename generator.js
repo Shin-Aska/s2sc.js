@@ -174,6 +174,7 @@ var generator = {
 			},
 
             declaration: "decl",
+            functionDefinition: "funcDef",
             stringDeclaration: "strDecl",
             compoundAssignment: "cmpAsgn"
         },
@@ -570,59 +571,66 @@ var generator = {
                 action.type == generator.enums.action.stringDeclaration) {
 
 				var isStr =
-					action.type == generator.enums.action.declaration ? false: true;
+					action.type == generator.enums.action.stringDeclaration ? true : false;
 				var contentBuffer = [];
 				var newDeclaration = false;
-                var variable = generator.refactor.findVariable(values[0]);
-
-
-
-                if (variable == -1) {
-
-					variable = new Variable(values[0], 0, i);
-					newDeclaration = true;
-                }
-                else {
-
-					variable = clone.variable(generator.refactor.variableList[variable]);
-                }
-
+                var variable = null;
+                var initialize = false;
                 var typeCasted = false;
 				var numericVariables = 0;
 				var checkStack = new ParenthesisStack();
 
-				for (var j = 2; j < line.tokens.length; j++) {
+				for (var j = 0; j < line.tokens.length; j++) {
 
 					if (line.tokens[j] == generator.enums.token.identifier) {
 
 						try {
 
-							var tmpVariable =
-								generator.refactor.getVariable(line.values[j]);
+							if (!initialize) {
 
-							action.pushVariableState(tmpVariable);
-							if (tmpVariable.type == generator.enums.c.data.type.integer ||
-								tmpVariable.type == generator.enums.c.data.type.float ) {
+								variable = generator.refactor.findVariable(values[0]);
+								if (variable == -1) {
 
-								if (variable.type == 0 ||
-									variable.type != generator.enums.c.data.type.float) {
+									variable = new Variable(line.values[j], 0, i);
+									newDeclaration = true;
+				                }
+				                else {
 
-									variable.type = tmpVariable.type;
+									variable = clone.variable(generator.refactor.variableList[variable]);
+				                }
+
+				                initialize = true;
+				            }
+				            else {
+
+				            	var tmpVariable =
+									generator.refactor.getVariable(line.values[j]);
+
+								action.pushVariableState(tmpVariable);
+								if (tmpVariable.type == generator.enums.c.data.type.integer ||
+									tmpVariable.type == generator.enums.c.data.type.float ) {
+
+									if (variable.type == 0 ||
+										variable.type != generator.enums.c.data.type.float) {
+
+										variable.type = tmpVariable.type;
+									}
+
+									if (!typeCasted && isStr) {
+										numericVariables += 1;
+									}
+
 								}
+								else {
 
-								if (!typeCasted && isStr) {
-									numericVariables += 1;
+									if (!typeCasted) {
+										isStr = true;
+										variable.type = generator.enums.c.data.type.string;
+									}
+
 								}
+				            }
 
-							}
-							else {
-
-								if (!typeCasted) {
-									isStr = true;
-									variable.type = generator.enums.c.data.type.string;
-								}
-
-							}
 						}
 						catch (exception) {
 
@@ -772,409 +780,384 @@ var generator = {
 					legal = false;
 				}
 
-                if (!isStr) {
+                if (!isStr && legal) {
 
-					if (legal && !isStr) {
+					
+					if (newDeclaration) {
 
-						if (newDeclaration) {
+						generator.refactor.insertVariable(variable);
+						contentBuffer.push(variable.type);
+					}
+					else {
 
-							generator.refactor.insertVariable(variable);
-							contentBuffer.push(variable.type);
-						}
-						else {
+						/*
+							To-do: Put code refactoring here...
+						*/
+						if (variable.ambigious == false) {
 
-							/*
-								To-do: Put code refactoring here...
-							*/
-							if (variable.ambigious == false) {
+							generator.includer.dataType.ambigious();
+							var foundDeclarationLine = false;
 
-								generator.includer.dataType.ambigious();
-								var foundDeclarationLine = false;
+							if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
 
-								if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
+								for (var j = 0; j < buffer.length; j++) {
 
-									for (var j = 0; j < buffer.length; j++) {
+									var tmpVariableHolder = null;
+									var foundDecl =  null;
 
-										var tmpVariableHolder = null;
-										var foundDecl =  null;
+									for (var k = 0; k < buffer[j].actionStack.length; k++) {
 
-										for (var k = 0; k < buffer[j].actionStack.length; k++) {
+										for (var l = 0; l < buffer[j].actionStack[k].state.length; l++) {
 
-											for (var l = 0; l < buffer[j].actionStack[k].state.length; l++) {
-
-												if (buffer[j].actionStack[k].state[l].name == variable.name) {
-													tmpVariableHolder = clone.variable(buffer[j].actionStack[k].state[l]);
-													foundDecl = buffer[j].actionStack[k].type;
-												}
+											if (buffer[j].actionStack[k].state[l].name == variable.name) {
+												tmpVariableHolder = clone.variable(buffer[j].actionStack[k].state[l]);
+												foundDecl = buffer[j].actionStack[k].type;
 											}
 										}
+									}
 
-										if (foundDeclarationLine == false && tmpVariableHolder != null) {
+									if (foundDeclarationLine == false && tmpVariableHolder != null) {
 
-											for (var k = 0; k < buffer[j].values.length; k++) {
+										for (var k = 0; k < buffer[j].values.length; k++) {
 
-												if (buffer[j].values[k] == variable.name) {
-
-													var content = "";
-													var allocContent = "";
-													foundDeclarationLine = true;
-
-													if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-														buffer[j].contentStack.shift();
-													}
-													else {
-														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(tmpVariableHolder.type + " ", "");
-													}
-
-													if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-
-														content += tmpVariableHolder.name + ".charValue";
-														allocContent = "( char * ) calloc(2048, sizeof( char ) )";
-													}
-													else {
-
-														content += tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
-														allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
-													}
-
-													for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-														if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-															buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].values[l], buffer[j].id[l]);
-														}
-													}
-
-													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(" + content + ")");
-
-													for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-														if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-															buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].id[l], buffer[j].values[l]);
-														}
-													}
-
-													buffer[j].contentStack.unshift(content + " = " + allocContent);
-													buffer[j].contentStack.unshift("ambigious " + variable.name);
-													continue;
-												}
-											}
-										}
-										else if (tmpVariableHolder != null) {
-
-											for (var k = 0; k < buffer[j].contentStack.length; k++) {
+											if (buffer[j].values[k] == variable.name) {
 
 												var content = "";
-												var currentLine = buffer[j].contentStack[k];
+												var allocContent = "";
+												foundDeclarationLine = true;
+
+												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+													buffer[j].contentStack.shift();
+												}
+												else {
+													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(tmpVariableHolder.type + " ", "");
+												}
 
 												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
 
 													content += tmpVariableHolder.name + ".charValue";
+													allocContent = "( char * ) calloc(2048, sizeof( char ) )";
 												}
 												else {
 
-													content += "(*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value)";
+													content += tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+													allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
 												}
 
 												for (var l = 0; l < buffer[j].tokens.length; l++) {
 
 													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-														currentLine = currentLine.replace(buffer[j].values[l], buffer[j].id[l]);
+														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].values[l], buffer[j].id[l]);
 													}
 												}
 
-												currentLine = currentLine.replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+												buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(" + content + ")");
 
 												for (var l = 0; l < buffer[j].tokens.length; l++) {
 
 													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-														currentLine = currentLine.replace(buffer[j].id[l], buffer[j].values[l]);
+														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].id[l], buffer[j].values[l]);
 													}
 												}
 
-												buffer[j].contentStack[k] = currentLine;
+												buffer[j].contentStack.unshift(content + " = " + allocContent);
+												buffer[j].contentStack.unshift("ambigious " + variable.name);
+												continue;
 											}
 										}
 									}
+									else if (tmpVariableHolder != null) {
 
-									variable.ambigious = true;
+										for (var k = 0; k < buffer[j].contentStack.length; k++) {
+
+											var content = "";
+											var currentLine = buffer[j].contentStack[k];
+
+											if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+
+												content += tmpVariableHolder.name + ".charValue";
+											}
+											else {
+
+												content += "(*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value)";
+											}
+
+											for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+													currentLine = currentLine.replace(buffer[j].values[l], buffer[j].id[l]);
+												}
+											}
+
+											currentLine = currentLine.replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+
+											for (var l = 0; l < buffer[j].tokens.length; l++) {
+
+												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
+													currentLine = currentLine.replace(buffer[j].id[l], buffer[j].values[l]);
+												}
+											}
+
+											buffer[j].contentStack[k] = currentLine;
+										}
+									}
 								}
+
+								variable.ambigious = true;
 							}
-
-							if (variable.ambigious) {
-
-								if (generator.refactor.variableList[variable.lineDeclared].type != variable.type) {
-
-									var fcontent = "";
-									var content = "";
-									var allocContent = "";
-
-									if (generator.refactor.variableList[variable.lineDeclared].type == generator.enums.c.data.type.string) {
-
-										fcontent += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
-									}
-									else {
-
-										fcontent += generator.refactor.variableList[variable.lineDeclared].name + "." + generator.refactor.variableList[variable.lineDeclared].type + "Value";
-									}
-
-									if (variable.type == generator.enums.c.data.type.string) {
-
-										allocContent = "( char * ) calloc(2048, sizeof( char ) )";
-										content += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
-									}
-									else {
-
-										allocContent = "( " + variable.type + " * ) calloc(1, sizeof( " + variable.type + " ) )";
-										content += variable.name + "." + variable.type + "Value";
-									}
-
-									line.contentStack.push("free(" + fcontent + ")");
-									line.contentStack.push(content + " = " + allocContent);
-								}
-							}
-
-							generator.refactor.variableList[variable.lineDeclared] = variable;
 						}
 
-						action.pushVariableState(variable);
-						line.actionStack.push(action);
+						if (variable.ambigious) {
 
-						// Code Generation Phase
+							if (generator.refactor.variableList[variable.lineDeclared].type != variable.type) {
 
-						var exponent = false;
-						var floor = false;
-						var stack = new ParenthesisStack();
-						var lastContent = "";
+								var fcontent = "";
+								var content = "";
+								var allocContent = "";
 
-						for (var j = 0; j < line.tokens.length; j++) {
+								if (generator.refactor.variableList[variable.lineDeclared].type == generator.enums.c.data.type.string) {
 
-							lastContent = contentBuffer.slice();
+									fcontent += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+								}
+								else {
 
-							if (line.tokens[j] == generator.enums.token.constant) {
-								try {
+									fcontent += generator.refactor.variableList[variable.lineDeclared].name + "." + generator.refactor.variableList[variable.lineDeclared].type + "Value";
+								}
 
-									var constantValue = "";
-									if (!isInteger(line.values[j])) {
-										if (generator.options.useDoubleInsteadOfFloat) {
-											constantValue += line.values[j];
-										}
-										else {
-											constantValue += line.values[j] + "f";
-										}
-									}
-									else {
+								if (variable.type == generator.enums.c.data.type.string) {
+
+									allocContent = "( char * ) calloc(2048, sizeof( char ) )";
+									content += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+								}
+								else {
+
+									allocContent = "( " + variable.type + " * ) calloc(1, sizeof( " + variable.type + " ) )";
+									content += variable.name + "." + variable.type + "Value";
+								}
+
+								line.contentStack.push("free(" + fcontent + ")");
+								line.contentStack.push(content + " = " + allocContent);
+							}
+						}
+
+						generator.refactor.variableList[variable.lineDeclared] = variable;
+					}
+
+					action.pushVariableState(variable);
+					line.actionStack.push(action);
+
+					// Code Generation Phase
+
+					var exponent = false;
+					var floor = false;
+					var stack = new ParenthesisStack();
+					var lastContent = "";
+
+					for (var j = 0; j < line.tokens.length; j++) {
+
+						lastContent = contentBuffer.slice();
+
+						if (line.tokens[j] == generator.enums.token.constant) {
+							try {
+
+								var constantValue = "";
+								if (!isInteger(line.values[j])) {
+									if (generator.options.useDoubleInsteadOfFloat) {
 										constantValue += line.values[j];
 									}
-
-									if (exponent) {
-
-										exponent = false;
-										var prevValue = "";
-										if (stack.count > 0) {
-											prevValue = stack.content[stack.content.length - 1].data.pop();
-										}
-										else {
-											prevValue = contentBuffer.pop();
-										}
-										var parameter = [prevValue, ",", constantValue];
-										var list = dictionary.pages.findWordsByKeywords(["math-operation", "exponent", "C-language"]);
-										var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
-										contentBuffer.push(candidate.function(parameter));
-									}
-									else if (floor) {
-										floor = false;
-									}
 									else {
-										contentBuffer.push(constantValue);
-									}
-
-								}
-								catch (exception) {
-
-									legal = false;
-								}
-							}
-							else if (line.tokens[j] == generator.enums.token.identifier) {
-
-								var identifier = null;
-								for (var k = 0; k < line.actionStack.length; k++) {
-
-									for (var l = 0; l < line.actionStack[k].state.length; l++) {
-
-										if (line.values[j] == line.actionStack[k].state[l].name) {
-
-											identifier = line.actionStack[k].state[l];
-											break;
-										}
+										constantValue += line.values[j] + "f";
 									}
 								}
-
-								if (identifier != null) {
-									if (identifier.lineDeclared != i && j != 0) {
-
-
-										if (identifier.type != variable.type && stack.count == 0) {
-
-											if (variable.type == generator.enums.c.data.type.integer ||
-												variable.type == generator.enums.c.data.type.float) {
-												contentBuffer.push("(" + variable.type + ")");
-											}
-											else if (identifier.type == generator.enums.c.data.type.string) {
-
-												if (variable.type == generator.enums.c.data.type.integer) {
-													generator.includer.function.parser.integer.string();
-												}
-												else if (variable.type == generator.enums.c.data.type.float) {
-													generator.includer.function.parser.float.string();
-												}
-											}
-										}
-									}
-
-									if (identifier.ambigious) {
-										if (identifier.type == generator.enums.c.data.type.string) {
-											contentBuffer.push(identifier.name + ".charValue");
-										}
-										else {
-											contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
-										}
-
-									}
-									else {
-										contentBuffer.push(identifier.name);
-									}
-								}
-							}
-							else if (line.tokens[j] == generator.enums.token.reserveWord) {
-
-								if (line.values[j] == generator.enums.c.data.type.integer ||
-									line.values[j] == generator.enums.python.data.type.float ||
-									line.values[j] == generator.enums.python.symbol.string) {
-									if (j + 1 != line.tokens.length) {
-										if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
-											stack.count += 1;
-											stack.functionName.push(line.values[j]);
-											stack.content.push(new StackContent());
-										}
-									}
+								else {
+									constantValue += line.values[j];
 								}
 
-							}
-							else if (line.tokens[j] == generator.enums.token.stringConstant) {
+								if (exponent) {
 
-								contentBuffer.push(line.values[j]);
-							}
-							else if (line.tokens[j] == generator.enums.token.symbol) {
-
-								var pushToBuffer = false;
-
-								if (line.values[j] == generator.enums.symbol.leftParenthesis) {
-
+									exponent = false;
+									var prevValue = "";
 									if (stack.count > 0) {
-										if (!((line.values[j - 1] == generator.enums.c.data.type.integer ||
-											line.values[j - 1] == generator.enums.python.data.type.float ||
-											line.values[j - 1] == generator.enums.python.symbol.string) ||
-											line.tokens[j - 1] == generator.enums.token.keyword)) {
-											pushToBuffer = true;
-											stack.set++;
-										}
+										prevValue = stack.content[stack.content.length - 1].data.pop();
 									}
 									else {
-										pushToBuffer = true;
+										prevValue = contentBuffer.pop();
+									}
+									var parameter = [prevValue, ",", constantValue];
+									var list = dictionary.pages.findWordsByKeywords(["math-operation", "exponent", "C-language"]);
+									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
+									contentBuffer.push(candidate.function(parameter));
+								}
+								else if (floor) {
+									floor = false;
+								}
+								else {
+									contentBuffer.push(constantValue);
+								}
+
+							}
+							catch (exception) {
+
+								legal = false;
+							}
+						}
+						else if (line.tokens[j] == generator.enums.token.identifier) {
+
+							var identifier = null;
+							for (var k = 0; k < line.actionStack.length; k++) {
+
+								for (var l = 0; l < line.actionStack[k].state.length; l++) {
+
+									if (line.values[j] == line.actionStack[k].state[l].name) {
+
+										identifier = line.actionStack[k].state[l];
+										break;
 									}
 								}
-								else if (line.values[j] == generator.enums.symbol.rightParenthesis) {
+							}
 
-									if (stack.set > 0) {
-										stack.set--;
-									}
+							if (identifier != null) {
+								if (identifier.lineDeclared != i && j != 0) {
 
-									if (stack.count == 0) {
-										pushToBuffer = true;
-									}
 
-									if (stack.set == 0 && stack.count > 0) {
+									if (identifier.type != variable.type && stack.count == 0) {
 
-										stack.count--;
-										var currentFunction = stack.functionName.pop();
-										var currentContentBuffer = stack.content.pop();
+										if (variable.type == generator.enums.c.data.type.integer ||
+											variable.type == generator.enums.c.data.type.float) {
+											contentBuffer.push("(" + variable.type + ")");
+										}
+										else if (identifier.type == generator.enums.c.data.type.string) {
 
-										var tmpEquation = currentContentBuffer.data.slice();
-
-										for (var k = 0; k < tmpEquation.length; k++) {
-
-											if (tmpEquation[k].search("intValue") != -1) {
-
-												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+											if (variable.type == generator.enums.c.data.type.integer) {
+												generator.includer.function.parser.integer.string();
 											}
-											else if (tmpEquation[k].search("intValue") != -1) {
-												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
-											}
-											else if (tmpEquation[k].search("charValue") != -1) {
-												tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+											else if (variable.type == generator.enums.c.data.type.float) {
+												generator.includer.function.parser.float.string();
 											}
 										}
+									}
+								}
 
-										var operationType = isEquation(tmpEquation.join(" "));
-										//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
-										if (operationType == generator.enums.c.data.type.string) {
+								if (identifier.ambigious) {
+									if (identifier.type == generator.enums.c.data.type.string) {
+										contentBuffer.push(identifier.name + ".charValue");
+									}
+									else {
+										contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
+									}
 
-											var list;
-											var candidate;
-											var result = "";
+								}
+								else {
+									contentBuffer.push(identifier.name);
+								}
+							}
+						}
+						else if (line.tokens[j] == generator.enums.token.reserveWord) {
 
-											if (currentFunction == generator.enums.c.data.type.integer) {
+							if (line.values[j] == generator.enums.c.data.type.integer ||
+								line.values[j] == generator.enums.python.data.type.float ||
+								line.values[j] == generator.enums.python.symbol.string) {
+								if (j + 1 != line.tokens.length) {
+									if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
+										stack.count += 1;
+										stack.functionName.push(line.values[j]);
+										stack.content.push(new StackContent());
+									}
+								}
+							}
 
-												if (currentContentBuffer.data.length > 1) {
-													//alert(currentContentBuffer.data.join(","));
-													for (var k = 0; k < currentContentBuffer.data.length; k++) {
-														if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
-															currentContentBuffer.data.splice(k, 1);
-															k--;
-														}
+						}
+						else if (line.tokens[j] == generator.enums.token.stringConstant) {
+
+							contentBuffer.push(line.values[j]);
+						}
+						else if (line.tokens[j] == generator.enums.token.symbol) {
+
+							var pushToBuffer = false;
+
+							if (line.values[j] == generator.enums.symbol.leftParenthesis) {
+
+								if (stack.count > 0) {
+									if (!((line.values[j - 1] == generator.enums.c.data.type.integer ||
+										line.values[j - 1] == generator.enums.python.data.type.float ||
+										line.values[j - 1] == generator.enums.python.symbol.string) ||
+										line.tokens[j - 1] == generator.enums.token.keyword)) {
+										pushToBuffer = true;
+										stack.set++;
+									}
+								}
+								else {
+									pushToBuffer = true;
+								}
+							}
+							else if (line.values[j] == generator.enums.symbol.rightParenthesis) {
+
+								if (stack.set > 0) {
+									stack.set--;
+								}
+
+								if (stack.count == 0) {
+									pushToBuffer = true;
+								}
+
+								if (stack.set == 0 && stack.count > 0) {
+
+									stack.count--;
+									var currentFunction = stack.functionName.pop();
+									var currentContentBuffer = stack.content.pop();
+
+									var tmpEquation = currentContentBuffer.data.slice();
+
+									for (var k = 0; k < tmpEquation.length; k++) {
+
+										if (tmpEquation[k].search("intValue") != -1) {
+
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("intValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("charValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+										}
+									}
+
+									var operationType = isEquation(tmpEquation.join(" "));
+									//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
+									if (operationType == generator.enums.c.data.type.string) {
+
+										var list;
+										var candidate;
+										var result = "";
+
+										if (currentFunction == generator.enums.c.data.type.integer) {
+
+											if (currentContentBuffer.data.length > 1) {
+												//alert(currentContentBuffer.data.join(","));
+												for (var k = 0; k < currentContentBuffer.data.length; k++) {
+													if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
+														currentContentBuffer.data.splice(k, 1);
+														k--;
 													}
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-													result = candidate.function(currentContentBuffer.data);
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
-													result = candidate.function(result);
 												}
-												else {
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
-													result = candidate.function(currentContentBuffer.data);
-												}
+
+												list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+												result = candidate.function(currentContentBuffer.data);
+
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
+												result = candidate.function(result);
 											}
-											else if (currentFunction == generator.enums.python.data.type.float) {
-
-												if (currentContentBuffer.data.length > 1) {
-
-													for (var k = 0; k < currentContentBuffer.data.length; k++) {
-														if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
-															currentContentBuffer.data.splice(k, 1);
-															k--;
-														}
-													}
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-													result = candidate.function(currentContentBuffer.data);
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
-													result = candidate.function(result);
-												}
-												else {
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
-													result = candidate.function(currentContentBuffer.data);
-												}
-
+											else {
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
+												result = candidate.function(currentContentBuffer.data);
 											}
-											else if (currentFunction == generator.enums.python.symbol.string) {
+										}
+										else if (currentFunction == generator.enums.python.data.type.float) {
+
+											if (currentContentBuffer.data.length > 1) {
 
 												for (var k = 0; k < currentContentBuffer.data.length; k++) {
 													if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
@@ -1186,81 +1169,33 @@ var generator = {
 												list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
 												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
 												result = candidate.function(currentContentBuffer.data);
+
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
+												result = candidate.function(result);
 											}
 											else {
-												// Function Analyser here
-												try {
-
-													var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
-													result = candidate.function(currentContentBuffer.data);
-
-												}
-												catch (exception) {
-
-												}
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
+												result = candidate.function(currentContentBuffer.data);
 											}
+
 										}
-										else if (operationType == generator.enums.c.data.type.integer) {
+										else if (currentFunction == generator.enums.python.symbol.string) {
 
-											var list;
-											var candidate;
-											var result = "";
-
-											if (currentFunction == generator.enums.c.data.type.integer) {
-												result = currentContentBuffer.data.join(" ");
-											}
-											else if (currentFunction == generator.enums.python.data.type.float) {
-												result = "((" + generator.enums.c.data.type.float + ")(" + currentContentBuffer.data.join(" ") + "))";
-											}
-											else if (currentFunction == generator.enums.python.symbol.string) {
-												list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
-												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-												result = candidate.function(currentContentBuffer.data.join(" "));
-											}
-											else {
-												//alert(currentContentBuffer.data.join("-"));
-												try {
-
-													var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
-													result = candidate.function(currentContentBuffer.data);
-
-												}
-												catch (exception) {
-
+											for (var k = 0; k < currentContentBuffer.data.length; k++) {
+												if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
+													currentContentBuffer.data.splice(k, 1);
+													k--;
 												}
 											}
-										}
-										else if (operationType == generator.enums.c.data.type.float) {
 
-											var list;
-											var candidate;
-											var result = "";
-											if (currentFunction == generator.enums.c.data.type.integer) {
-												result = "((" + generator.enums.c.data.type.integer + ")(" + currentContentBuffer.data.join(" ") + "))";
-											}
-											else if (currentFunction == generator.enums.symbol.float) {
-												result = currentContentBuffer.data.join(" ");
-											}
-											else if (currentFunction == generator.enums.python.symbol.string) {
-
-												list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
-												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-												result = candidate.function(currentContentBuffer.data.join(" "));
-											}
-											else {
-												// Function Analyser here
-												try {
-
-													var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
-													result = candidate.function(currentContentBuffer.data);
-
-												}
-												catch (exception) {
-
-												}
-											}
+											list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data);
 										}
 										else {
+											// Function Analyser here
 											try {
 
 												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
@@ -1271,62 +1206,134 @@ var generator = {
 
 											}
 										}
+									}
+									else if (operationType == generator.enums.c.data.type.integer) {
 
-										if (stack.content.length == 0) {
-											currentContentBuffer.result += result;
-											contentBuffer.push(currentContentBuffer.result);
+										var list;
+										var candidate;
+										var result = "";
+
+										if (currentFunction == generator.enums.c.data.type.integer) {
+											result = currentContentBuffer.data.join(" ");
+										}
+										else if (currentFunction == generator.enums.python.data.type.float) {
+											result = "((" + generator.enums.c.data.type.float + ")(" + currentContentBuffer.data.join(" ") + "))";
+										}
+										else if (currentFunction == generator.enums.python.symbol.string) {
+											list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data.join(" "));
 										}
 										else {
+											//alert(currentContentBuffer.data.join("-"));
+											try {
 
-											stack.content[stack.content.length - 1].data.push(result);
+												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
+												result = candidate.function(currentContentBuffer.data);
+
+											}
+											catch (exception) {
+
+											}
+										}
+									}
+									else if (operationType == generator.enums.c.data.type.float) {
+
+										var list;
+										var candidate;
+										var result = "";
+										if (currentFunction == generator.enums.c.data.type.integer) {
+											result = "((" + generator.enums.c.data.type.integer + ")(" + currentContentBuffer.data.join(" ") + "))";
+										}
+										else if (currentFunction == generator.enums.symbol.float) {
+											result = currentContentBuffer.data.join(" ");
+										}
+										else if (currentFunction == generator.enums.python.symbol.string) {
+
+											list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data.join(" "));
+										}
+										else {
+											// Function Analyser here
+											try {
+
+												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
+												result = candidate.function(currentContentBuffer.data);
+
+											}
+											catch (exception) {
+
+											}
+										}
+									}
+									else {
+										try {
+
+											var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
+											result = candidate.function(currentContentBuffer.data);
+
+										}
+										catch (exception) {
+
 										}
 									}
 
-								}
-								else if (line.values[j] == generator.enums.python.symbol.exponent) {
-									exponent = true;
-								}
-								else if (line.values[j] == generator.enums.python.symbol.floorDivision) {
-									floor = true;
-								}
-								else {
-									pushToBuffer = true;
-								}
+									if (stack.content.length == 0) {
+										currentContentBuffer.result += result;
+										contentBuffer.push(currentContentBuffer.result);
+									}
+									else {
 
-								if (pushToBuffer) {
-									contentBuffer.push(line.values[j]);
-								}
-							}
-							else if (line.tokens[j] == generator.enums.token.keyword) {
-								if (j + 1 != line.tokens.length) {
-									if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
-										stack.count += 1;
-										stack.functionName.push(line.values[j]);
-										stack.content.push(new StackContent());
+										stack.content[stack.content.length - 1].data.push(result);
 									}
 								}
+
+							}
+							else if (line.values[j] == generator.enums.python.symbol.exponent) {
+								exponent = true;
+							}
+							else if (line.values[j] == generator.enums.python.symbol.floorDivision) {
+								floor = true;
+							}
+							else {
+								pushToBuffer = true;
 							}
 
-							if (stack.count > 0) {
-
-								for (var k = lastContent.length; k < contentBuffer.length; k++) {
-
-									stack.pushData(contentBuffer[k]);
+							if (pushToBuffer) {
+								contentBuffer.push(line.values[j]);
+							}
+						}
+						else if (line.tokens[j] == generator.enums.token.keyword) {
+							if (j + 1 != line.tokens.length) {
+								if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
+									stack.count += 1;
+									stack.functionName.push(line.values[j]);
+									stack.content.push(new StackContent());
 								}
+							}
+						}
 
-								contentBuffer = lastContent;
+						if (stack.count > 0) {
+
+							for (var k = lastContent.length; k < contentBuffer.length; k++) {
+
+								stack.pushData(contentBuffer[k]);
 							}
+
+							contentBuffer = lastContent;
 						}
-						//
-						var content = "";
-						for (var j = 0; j < contentBuffer.length; j++) {
-							content += trimString(contentBuffer[j]);
-							if (j + 1 < contentBuffer.length) {
-								content += " ";
-							}
-						}
-						line.contentStack.push(content);
 					}
+					//
+					var content = "";
+					for (var j = 0; j < contentBuffer.length; j++) {
+						content += trimString(contentBuffer[j]);
+						if (j + 1 < contentBuffer.length) {
+							content += " ";
+						}
+					}
+					line.contentStack.push(content);
+					
                 }
 
 				/*
@@ -2008,248 +2015,221 @@ var generator = {
 					}
 				}
 
-				//alert(isStr + "  " + numericVariables);
 				if (isStr && numericVariables > 0) {
 					legal = false;
 				}
 
-				if (!isStr) {
+				if (!isStr && legal) {
 
-					if (legal) {
+					var exponent = false;
+					var floor = false;
+					var stack = new ParenthesisStack();
+					line.actionStack.push(action);
 
-						var exponent = false;
-						var floor = false;
-						var stack = new ParenthesisStack();
-						line.actionStack.push(action);
+					for (var j = 0; j < line.tokens.length; j++) {
 
-						for (var j = 0; j < line.tokens.length; j++) {
+						lastContent = contentBuffer.slice();
 
-							lastContent = contentBuffer.slice();
+						if (line.tokens[j] == generator.enums.token.constant) {
+							try {
 
-							if (line.tokens[j] == generator.enums.token.constant) {
-								try {
-
-									var constantValue = "";
-									if (!isInteger(line.values[j])) {
-										if (generator.options.useDoubleInsteadOfFloat) {
-											constantValue += line.values[j];
-										}
-										else {
-											constantValue += line.values[j] + "f";
-										}
-									}
-									else {
+								var constantValue = "";
+								if (!isInteger(line.values[j])) {
+									if (generator.options.useDoubleInsteadOfFloat) {
 										constantValue += line.values[j];
 									}
-
-									if (exponent) {
-										exponent = false;
-										var prevValue = "";
-										if (stack.count > 0) {
-											prevValue = stack.content[stack.content.length - 1].data.pop();
-										}
-										else {
-											prevValue = contentBuffer.pop();
-										}
-										var parameter = [prevValue, ",", constantValue];
-										var list = dictionary.pages.findWordsByKeywords(["math-operation", "exponent", "C-language"]);
-										var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
-										contentBuffer.push(candidate.function(parameter));
-									}
-									else if (floor) {
-										floor = false;
-									}
 									else {
-										contentBuffer.push(constantValue);
-									}
-
-								}
-								catch (exception) {
-
-									legal = false;
-								}
-							}
-							else if (line.tokens[j] == generator.enums.token.identifier) {
-
-								var identifier = null;
-								for (var k = 0; k < line.actionStack.length; k++) {
-
-									for (var l = 0; l < line.actionStack[k].state.length; l++) {
-
-										if (line.values[j] == line.actionStack[k].state[l].name) {
-
-											identifier = line.actionStack[k].state[l];
-											break;
-										}
+										constantValue += line.values[j] + "f";
 									}
 								}
-
-								if (identifier != null) {
-									if (identifier.lineDeclared != i && j != 0) {
-
-
-										if (identifier.type != variable.type && stack.count == 0) {
-
-											if (variable.type == generator.enums.c.data.type.integer ||
-												variable.type == generator.enums.c.data.type.float) {
-												contentBuffer.push("(" + variable.type + ")");
-											}
-											else if (identifier.type == generator.enums.c.data.type.string) {
-
-												if (variable.type == generator.enums.c.data.type.integer) {
-													generator.includer.function.parser.integer.string();
-												}
-												else if (variable.type == generator.enums.c.data.type.float) {
-													generator.includer.function.parser.float.string();
-												}
-											}
-										}
-									}
-
-									if (identifier.ambigious) {
-										if (identifier.type == generator.enums.c.data.type.string) {
-											contentBuffer.push(identifier.name + ".charValue");
-										}
-										else {
-											contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
-										}
-
-									}
-									else {
-										contentBuffer.push(identifier.name);
-									}
-								}
-							}
-							else if (line.tokens[j] == generator.enums.token.reserveWord) {
-
-								if (line.values[j] == generator.enums.c.data.type.integer ||
-									line.values[j] == generator.enums.python.data.type.float ||
-									line.values[j] == generator.enums.python.symbol.string) {
-									if (j + 1 != line.tokens.length) {
-										if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
-											stack.count += 1;
-											stack.functionName.push(line.values[j]);
-											stack.content.push(new StackContent());
-										}
-									}
+								else {
+									constantValue += line.values[j];
 								}
 
-							}
-							else if (line.tokens[j] == generator.enums.token.stringConstant) {
-
-								contentBuffer.push(line.values[j]);
-							}
-							else if (line.tokens[j] == generator.enums.token.symbol) {
-
-								var pushToBuffer = false;
-
-								if (line.values[j] == generator.enums.symbol.leftParenthesis) {
-
+								if (exponent) {
+									exponent = false;
+									var prevValue = "";
 									if (stack.count > 0) {
-										if (!((line.values[j - 1] == generator.enums.c.data.type.integer ||
-											line.values[j - 1] == generator.enums.python.data.type.float ||
-											line.values[j - 1] == generator.enums.python.symbol.string) ||
-											line.tokens[j - 1] == generator.enums.token.keyword)) {
-											pushToBuffer = true;
-											stack.set++;
-										}
+										prevValue = stack.content[stack.content.length - 1].data.pop();
 									}
 									else {
-										pushToBuffer = true;
+										prevValue = contentBuffer.pop();
+									}
+									var parameter = [prevValue, ",", constantValue];
+									var list = dictionary.pages.findWordsByKeywords(["math-operation", "exponent", "C-language"]);
+									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
+									contentBuffer.push(candidate.function(parameter));
+								}
+								else if (floor) {
+									floor = false;
+								}
+								else {
+									contentBuffer.push(constantValue);
+								}
+
+							}
+							catch (exception) {
+
+								legal = false;
+							}
+						}
+						else if (line.tokens[j] == generator.enums.token.identifier) {
+
+							var identifier = null;
+							for (var k = 0; k < line.actionStack.length; k++) {
+
+								for (var l = 0; l < line.actionStack[k].state.length; l++) {
+
+									if (line.values[j] == line.actionStack[k].state[l].name) {
+
+										identifier = line.actionStack[k].state[l];
+										break;
 									}
 								}
-								else if (line.values[j] == generator.enums.symbol.rightParenthesis) {
+							}
 
-									if (stack.set > 0) {
-										stack.set--;
-									}
+							if (identifier != null) {
+								if (identifier.lineDeclared != i && j != 0) {
 
-									if (stack.count == 0) {
-										pushToBuffer = true;
-									}
 
-									if (stack.set == 0 && stack.count > 0) {
+									if (identifier.type != variable.type && stack.count == 0) {
 
-										stack.count--;
-										var currentFunction = stack.functionName.pop();
-										var currentContentBuffer = stack.content.pop();
+										if (variable.type == generator.enums.c.data.type.integer ||
+											variable.type == generator.enums.c.data.type.float) {
+											contentBuffer.push("(" + variable.type + ")");
+										}
+										else if (identifier.type == generator.enums.c.data.type.string) {
 
-										var tmpEquation = currentContentBuffer.data.slice();
-
-										for (var k = 0; k < tmpEquation.length; k++) {
-
-											if (tmpEquation[k].search("intValue") != -1) {
-
-												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+											if (variable.type == generator.enums.c.data.type.integer) {
+												generator.includer.function.parser.integer.string();
 											}
-											else if (tmpEquation[k].search("intValue") != -1) {
-												tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
-											}
-											else if (tmpEquation[k].search("charValue") != -1) {
-												tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+											else if (variable.type == generator.enums.c.data.type.float) {
+												generator.includer.function.parser.float.string();
 											}
 										}
+									}
+								}
 
-										var operationType = isEquation(tmpEquation.join(" "));
-										//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
-										if (operationType == generator.enums.c.data.type.string) {
+								if (identifier.ambigious) {
+									if (identifier.type == generator.enums.c.data.type.string) {
+										contentBuffer.push(identifier.name + ".charValue");
+									}
+									else {
+										contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
+									}
 
-											var list;
-											var candidate;
-											var result = "";
+								}
+								else {
+									contentBuffer.push(identifier.name);
+								}
+							}
+						}
+						else if (line.tokens[j] == generator.enums.token.reserveWord) {
 
-											if (currentFunction == generator.enums.c.data.type.integer) {
+							if (line.values[j] == generator.enums.c.data.type.integer ||
+								line.values[j] == generator.enums.python.data.type.float ||
+								line.values[j] == generator.enums.python.symbol.string) {
+								if (j + 1 != line.tokens.length) {
+									if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
+										stack.count += 1;
+										stack.functionName.push(line.values[j]);
+										stack.content.push(new StackContent());
+									}
+								}
+							}
 
-												if (currentContentBuffer.data.length > 1) {
-													//alert(currentContentBuffer.data.join(","));
-													for (var k = 0; k < currentContentBuffer.data.length; k++) {
-														if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
-															currentContentBuffer.data.splice(k, 1);
-															k--;
-														}
+						}
+						else if (line.tokens[j] == generator.enums.token.stringConstant) {
+
+							contentBuffer.push(line.values[j]);
+						}
+						else if (line.tokens[j] == generator.enums.token.symbol) {
+
+							var pushToBuffer = false;
+
+							if (line.values[j] == generator.enums.symbol.leftParenthesis) {
+
+								if (stack.count > 0) {
+									if (!((line.values[j - 1] == generator.enums.c.data.type.integer ||
+										line.values[j - 1] == generator.enums.python.data.type.float ||
+										line.values[j - 1] == generator.enums.python.symbol.string) ||
+										line.tokens[j - 1] == generator.enums.token.keyword)) {
+										pushToBuffer = true;
+										stack.set++;
+									}
+								}
+								else {
+									pushToBuffer = true;
+								}
+							}
+							else if (line.values[j] == generator.enums.symbol.rightParenthesis) {
+
+								if (stack.set > 0) {
+									stack.set--;
+								}
+
+								if (stack.count == 0) {
+									pushToBuffer = true;
+								}
+
+								if (stack.set == 0 && stack.count > 0) {
+
+									stack.count--;
+									var currentFunction = stack.functionName.pop();
+									var currentContentBuffer = stack.content.pop();
+
+									var tmpEquation = currentContentBuffer.data.slice();
+
+									for (var k = 0; k < tmpEquation.length; k++) {
+
+										if (tmpEquation[k].search("intValue") != -1) {
+
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("intValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+										}
+										else if (tmpEquation[k].search("charValue") != -1) {
+											tmpEquation[k] = tmpEquation[k].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+										}
+									}
+
+									var operationType = isEquation(tmpEquation.join(" "));
+									//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
+									if (operationType == generator.enums.c.data.type.string) {
+
+										var list;
+										var candidate;
+										var result = "";
+
+										if (currentFunction == generator.enums.c.data.type.integer) {
+
+											if (currentContentBuffer.data.length > 1) {
+												//alert(currentContentBuffer.data.join(","));
+												for (var k = 0; k < currentContentBuffer.data.length; k++) {
+													if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
+														currentContentBuffer.data.splice(k, 1);
+														k--;
 													}
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-													result = candidate.function(currentContentBuffer.data);
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
-													result = candidate.function(result);
 												}
-												else {
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
-													result = candidate.function(currentContentBuffer.data);
-												}
+
+												list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+												result = candidate.function(currentContentBuffer.data);
+
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
+												result = candidate.function(result);
 											}
-											else if (currentFunction == generator.enums.python.data.type.float) {
-
-												if (currentContentBuffer.data.length > 1) {
-
-													for (var k = 0; k < currentContentBuffer.data.length; k++) {
-														if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
-															currentContentBuffer.data.splice(k, 1);
-															k--;
-														}
-													}
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-													result = candidate.function(currentContentBuffer.data);
-
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
-													result = candidate.function(result);
-												}
-												else {
-													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
-													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
-													result = candidate.function(currentContentBuffer.data);
-												}
-
+											else {
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
+												result = candidate.function(currentContentBuffer.data);
 											}
-											else if (currentFunction == generator.enums.python.symbol.string) {
+										}
+										else if (currentFunction == generator.enums.python.data.type.float) {
+
+											if (currentContentBuffer.data.length > 1) {
 
 												for (var k = 0; k < currentContentBuffer.data.length; k++) {
 													if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
@@ -2261,81 +2241,33 @@ var generator = {
 												list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
 												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
 												result = candidate.function(currentContentBuffer.data);
+
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
+												result = candidate.function(result);
 											}
 											else {
-												// Function Analyser here
-												try {
-
-													var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
-													result = candidate.function(currentContentBuffer.data);
-
-												}
-												catch (exception) {
-
-												}
+												list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
+												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
+												result = candidate.function(currentContentBuffer.data);
 											}
+
 										}
-										else if (operationType == generator.enums.c.data.type.integer) {
+										else if (currentFunction == generator.enums.python.symbol.string) {
 
-											var list;
-											var candidate;
-											var result = "";
-
-											if (currentFunction == generator.enums.c.data.type.integer) {
-												result = currentContentBuffer.data.join(" ");
-											}
-											else if (currentFunction == generator.enums.python.data.type.float) {
-												result = "((" + generator.enums.c.data.type.float + ")(" + currentContentBuffer.data.join(" ") + "))";
-											}
-											else if (currentFunction == generator.enums.python.symbol.string) {
-												list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
-												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-												result = candidate.function(currentContentBuffer.data.join(" "));
-											}
-											else {
-												//alert(currentContentBuffer.data.join("-"));
-												try {
-
-													var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
-													result = candidate.function(currentContentBuffer.data);
-
-												}
-												catch (exception) {
-
+											for (var k = 0; k < currentContentBuffer.data.length; k++) {
+												if (currentContentBuffer.data[k] == generator.enums.symbol.add) {
+													currentContentBuffer.data.splice(k, 1);
+													k--;
 												}
 											}
-										}
-										else if (operationType == generator.enums.c.data.type.float) {
 
-											var list;
-											var candidate;
-											var result = "";
-											if (currentFunction == generator.enums.c.data.type.integer) {
-												result = "((" + generator.enums.c.data.type.integer + ")(" + currentContentBuffer.data.join(" ") + "))";
-											}
-											else if (currentFunction == generator.enums.symbol.float) {
-												result = currentContentBuffer.data.join(" ");
-											}
-											else if (currentFunction == generator.enums.python.symbol.string) {
-
-												list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
-												candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-												result = candidate.function(currentContentBuffer.data.join(" "));
-											}
-											else {
-												// Function Analyser here
-												try {
-
-													var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
-													result = candidate.function(currentContentBuffer.data);
-
-												}
-												catch (exception) {
-
-												}
-											}
+											list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data);
 										}
 										else {
+											// Function Analyser here
 											try {
 
 												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
@@ -2346,63 +2278,135 @@ var generator = {
 
 											}
 										}
+									}
+									else if (operationType == generator.enums.c.data.type.integer) {
 
-										if (stack.content.length == 0) {
-											currentContentBuffer.result += result;
-											contentBuffer.push(currentContentBuffer.result);
+										var list;
+										var candidate;
+										var result = "";
+
+										if (currentFunction == generator.enums.c.data.type.integer) {
+											result = currentContentBuffer.data.join(" ");
+										}
+										else if (currentFunction == generator.enums.python.data.type.float) {
+											result = "((" + generator.enums.c.data.type.float + ")(" + currentContentBuffer.data.join(" ") + "))";
+										}
+										else if (currentFunction == generator.enums.python.symbol.string) {
+											list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data.join(" "));
 										}
 										else {
+											//alert(currentContentBuffer.data.join("-"));
+											try {
 
-											stack.content[stack.content.length - 1].data.push(result);
+												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
+												result = candidate.function(currentContentBuffer.data);
+
+											}
+											catch (exception) {
+
+											}
+										}
+									}
+									else if (operationType == generator.enums.c.data.type.float) {
+
+										var list;
+										var candidate;
+										var result = "";
+										if (currentFunction == generator.enums.c.data.type.integer) {
+											result = "((" + generator.enums.c.data.type.integer + ")(" + currentContentBuffer.data.join(" ") + "))";
+										}
+										else if (currentFunction == generator.enums.symbol.float) {
+											result = currentContentBuffer.data.join(" ");
+										}
+										else if (currentFunction == generator.enums.python.symbol.string) {
+
+											list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data.join(" "));
+										}
+										else {
+											// Function Analyser here
+											try {
+
+												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
+												result = candidate.function(currentContentBuffer.data);
+
+											}
+											catch (exception) {
+
+											}
+										}
+									}
+									else {
+										try {
+
+											var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
+											result = candidate.function(currentContentBuffer.data);
+
+										}
+										catch (exception) {
+
 										}
 									}
 
-								}
-								else if (line.values[j] == generator.enums.python.symbol.exponent) {
-									exponent = true;
-								}
-								else if (line.values[j] == generator.enums.python.symbol.floorDivision) {
-									floor = true;
-								}
-								else {
-									pushToBuffer = true;
-								}
+									if (stack.content.length == 0) {
+										currentContentBuffer.result += result;
+										contentBuffer.push(currentContentBuffer.result);
+									}
+									else {
 
-								if (pushToBuffer) {
-									contentBuffer.push(line.values[j]);
-								}
-							}
-							else if (line.tokens[j] == generator.enums.token.keyword) {
-								if (j + 1 != line.tokens.length) {
-									if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
-										stack.count += 1;
-										stack.functionName.push(line.values[j]);
-										stack.content.push(new StackContent());
+										stack.content[stack.content.length - 1].data.push(result);
 									}
 								}
+
+							}
+							else if (line.values[j] == generator.enums.python.symbol.exponent) {
+								exponent = true;
+							}
+							else if (line.values[j] == generator.enums.python.symbol.floorDivision) {
+								floor = true;
+							}
+							else {
+								pushToBuffer = true;
 							}
 
-							if (stack.count > 0) {
-
-								for (var k = lastContent.length; k < contentBuffer.length; k++) {
-
-									stack.pushData(contentBuffer[k]);
+							if (pushToBuffer) {
+								contentBuffer.push(line.values[j]);
+							}
+						}
+						else if (line.tokens[j] == generator.enums.token.keyword) {
+							if (j + 1 != line.tokens.length) {
+								if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
+									stack.count += 1;
+									stack.functionName.push(line.values[j]);
+									stack.content.push(new StackContent());
 								}
-
-								contentBuffer = lastContent;
-							}
-						}
-						//
-						var content = "";
-						for (var j = 0; j < contentBuffer.length; j++) {
-							content += trimString(contentBuffer[j]);
-							if (j + 1 < contentBuffer.length) {
-								content += " ";
 							}
 						}
 
-						line.contentStack.push(content);
+						if (stack.count > 0) {
+
+							for (var k = lastContent.length; k < contentBuffer.length; k++) {
+
+								stack.pushData(contentBuffer[k]);
+							}
+
+							contentBuffer = lastContent;
+						}
 					}
+					//
+					var content = "";
+					for (var j = 0; j < contentBuffer.length; j++) {
+						content += trimString(contentBuffer[j]);
+						if (j + 1 < contentBuffer.length) {
+							content += " ";
+						}
+					}
+
+					line.contentStack.push(content);
+				
 				}
 
 				if (isStr && legal) {
@@ -2852,6 +2856,9 @@ var generator = {
 
 					line.contentStack.push(result);
 				}
+
+			}
+			else if (action.type == generator.enums.action.functionDefinition) {
 
 			}
 			else if (action.type == generator.enums.error.parse) {
