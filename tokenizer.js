@@ -222,7 +222,7 @@ var tokenizer = {
 				"-", "*", "/", "%", "**", "//",
 				"(", ")", "<", ">", "{", "}", ",", ".", "==", "!=", "<>", ":",
 			],
-			reserveWord: ["int", "float", "str", "def", "class"]
+			reserveWord: ["int", "float", "str", "def", "class", "True", "False"]
 		},
 
 		tokenize: function(text) {

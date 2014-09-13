@@ -93,16 +93,16 @@ var isEquation = function(arr) {
 				}
 				catch (ex2) {
 
-					var cFuncNames = ["toInteger_str", funcRepresentation1, "toString_int", funcRepresentation2];
-					var cFuncDType = ["int", floatRepresentation, "string", "string"];
-					var cFuncIndex = [-1, -1, -1, -1];
+					var cFuncNames = ["toInteger_str", funcRepresentation1, "toString_int", funcRepresentation2, "true", "false", "True", "False"];
+					var cFuncDType = ["int", floatRepresentation, "string", "string", "int", "int", "int", "int"];
+					var cFuncIndex = [-1, -1, -1, -1, -1, -1, -1, -1];
 					var candidateIndex = -1;
 
-					for (var j = 0; j < 4; j++) {
+					for (var j = 0; j < 8; j++) {
 						cFuncIndex[j] = n[i].search(cFuncNames[j]);
 					}
 
-					for (var j = 0; j < 4; j++) {
+					for (var j = 0; j < 8; j++) {
 
 						if (candidateIndex == -1) {
 							candidateIndex = j;

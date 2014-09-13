@@ -346,7 +346,16 @@ var dictionary = {
 						}
 						catch (ex) {
 
-							paramFormat += parameter[i];
+							if (parameter[i] == generator.enums.symbol.true || parameter[i] == generator.enums.symbol.false) {
+
+								paramFormat += "\"" + parameter[i] + "\"";
+								stringFormat += "%s";
+								continue;
+							}
+							else {
+
+								paramFormat += parameter[i];
+							}
 
 							try {
 								if (isInteger(parameter[i])) {
@@ -431,8 +440,15 @@ var dictionary = {
 							}
 						}
 						else {
+							alert(parameter[i]);
+							if (parameter[i] == generator.enums.symbol.true || parameter[i] == generator.enums.symbol.false) {
 
-							paramFormat += parameter[i];
+								paramFormat += "\"" + parameter[i] + "\"";
+							}
+							else {
+
+								paramFormat += parameter[i];
+							}
 
 							try {
 								if (isInteger(parameter[i])) {

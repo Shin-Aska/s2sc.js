@@ -122,6 +122,7 @@ var generator = {
 
 					integer: "int",
 					float: "float",
+					bool: "bool",
 					string: "string",
 					object: "object",
 					void: 0
@@ -147,6 +148,7 @@ var generator = {
 
 					integer: "int",
 					float: "float",
+					bool: "bool",
 					string: "string",
 					object: "object",
 					void: 0
@@ -171,12 +173,14 @@ var generator = {
 				result: "result",
 				id: "id",
 				increment: "incr",
+				boolean: "boolStmt",
 			},
 
             declaration: "decl",
             functionDefinition: "funcDef",
             stringDeclaration: "strDecl",
-            compoundAssignment: "cmpAsgn"
+            compoundAssignment: "cmpAsgn",
+            booleanDeclaration: "boolDecl",
         },
 
         symbol: {
@@ -188,7 +192,11 @@ var generator = {
 			dot: ".",
 			equal: "=",
 			leftParenthesis: "(",
-			rightParenthesis: ")"
+			rightParenthesis: ")",
+			lessThan: "<",
+			greaterThan: ">",
+			true: "True",
+			false: "False",
 
         },
 
@@ -212,7 +220,8 @@ var generator = {
 
 			ambigious: function() {
 
-				generator.unions.insert("ambigious", "\tint *intValue;\n\tfloat *floatValue;\n\tchar *charValue;\n\tvoid *voidValue;\n");
+				generator.headers.insert("stdbool.h");
+				generator.unions.insert("ambigious", "\tbool *boolValue;\n\tint *intValue;\n\tfloat *floatValue;\n\tchar *charValue;\n\tvoid *voidValue;\n");
 			}
 		},
 
@@ -568,7 +577,8 @@ var generator = {
             var line = new Line(i, tokens.slice(), values, tokenIDs);
             var legal = true;
             if (action.type == generator.enums.action.declaration ||
-                action.type == generator.enums.action.stringDeclaration) {
+                action.type == generator.enums.action.stringDeclaration ||
+                action.type == generator.enums.action.booleanDeclaration) {
 
 				var isStr =
 					action.type == generator.enums.action.stringDeclaration ? true : false;
@@ -608,10 +618,12 @@ var generator = {
 
 								action.pushVariableState(tmpVariable);
 								if (tmpVariable.type == generator.enums.c.data.type.integer ||
-									tmpVariable.type == generator.enums.c.data.type.float ) {
+									tmpVariable.type == generator.enums.c.data.type.float ||
+									tmpVariable.type == generator.enums.c.data.type.bool) {
 
 									if (variable.type == 0 ||
-										variable.type != generator.enums.c.data.type.float) {
+										variable.type != generator.enums.c.data.type.float &&
+										variable.type != generator.enums.c.data.type.bool) {
 
 										variable.type = tmpVariable.type;
 									}
@@ -641,7 +653,6 @@ var generator = {
 
 						if (variable.type == 0 ||
 							variable.type != generator.enums.c.data.type.float) {
-
 							try {
 
 								variable.type = isInteger(line.values[j]) ?
@@ -692,12 +703,18 @@ var generator = {
 
 							typeCasted = true;
 						}
+						else if (line.values[j] == generator.enums.symbol.true ||
+								 line.values[j] == generator.enums.symbol.false) {
+
+                            variable.type = generator.enums.c.data.type.bool;
+						}
 					}
 					else if (line.tokens[j] == generator.enums.token.keyword) {
 
 						var funcType = dictionary.pages.findWord(line.values[j], currentLanguage).returnType;
 						if (variable.type == 0 ||
-							variable.type != generator.enums.c.data.type.float) {
+							variable.type != generator.enums.c.data.type.float &&
+							variable.type != generator.enums.c.data.type.bool) {
 
 							if (funcType == generator.enums.c.data.type.float ||
 								funcType == generator.enums.c.data.type.integer) {
@@ -771,18 +788,27 @@ var generator = {
 								variable.type = generator.enums.c.data.type.float;
 							}
 						}
+						else if (line.values[j] == generator.enums.symbol.lessThan ||
+								 line.values[j] == generator.enums.symbol.moreThan) {
+
+                            variable.type = generator.enums.c.data.type.bool;
+						}
 					}
 				}
 
-				//alert(isStr + "  " + numericVariables);
+				//alert(isStr + "  " + numericVariables + "  " + legal);
 				if ((isStr && numericVariables > 0) || variable.type == 0) {
 
 					legal = false;
 				}
 
+				if (variable.type == generator.enums.c.data.type.bool) {
+
+					generator.headers.insert("stdbool.h");
+				}
+
                 if (!isStr && legal) {
 
-					
 					if (newDeclaration) {
 
 						generator.refactor.insertVariable(variable);
@@ -795,7 +821,6 @@ var generator = {
 						*/
 						if (variable.ambigious == false) {
 
-							generator.includer.dataType.ambigious();
 							var foundDeclarationLine = false;
 
 							if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
@@ -904,6 +929,7 @@ var generator = {
 								}
 
 								variable.ambigious = true;
+								generator.includer.dataType.ambigious();
 							}
 						}
 
@@ -1057,6 +1083,7 @@ var generator = {
 							if (line.values[j] == generator.enums.c.data.type.integer ||
 								line.values[j] == generator.enums.python.data.type.float ||
 								line.values[j] == generator.enums.python.symbol.string) {
+
 								if (j + 1 != line.tokens.length) {
 									if (line.values[j + 1] == generator.enums.symbol.leftParenthesis) {
 										stack.count += 1;
@@ -1064,6 +1091,10 @@ var generator = {
 										stack.content.push(new StackContent());
 									}
 								}
+							}
+							else if (line.values[j] == generator.enums.symbol.true ||
+									 line.values[j] == generator.enums.symbol.false) {
+									contentBuffer.push(line.values[j].toLowerCase());
 							}
 
 						}
@@ -1333,7 +1364,7 @@ var generator = {
 						}
 					}
 					line.contentStack.push(content);
-					
+
                 }
 
 				/*
@@ -1362,7 +1393,6 @@ var generator = {
 
 						if (variable.ambigious == false) {
 
-							generator.includer.dataType.ambigious();
 							var foundDeclarationLine = false;
 
 							if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
@@ -1471,6 +1501,7 @@ var generator = {
 								}
 
 								variable.ambigious = true;
+								generator.includer.dataType.ambigious();
 							}
 						}
 
@@ -1627,6 +1658,10 @@ var generator = {
 										stack.content.push(new StackContent());
 									}
 								}
+							}
+							else if (line.values[j] == generator.enums.symbol.true ||
+									 line.values[j] == generator.enums.symbol.false) {
+									contentBuffer.push(line.values[j]);
 							}
 						}
 						else if (line.tokens[j] == generator.enums.token.stringConstant) {
@@ -1906,7 +1941,8 @@ var generator = {
 					 action.type == generator.enums.action.basic.result ||
 					 action.type == generator.enums.action.basic.id ||
 					 action.type == generator.enums.action.basic.increment ||
-					 action.type == generator.enums.action.compoundAssignment) {
+					 action.type == generator.enums.action.compoundAssignment ||
+					 action.type == generator.enums.action.basic.boolean) {
 
 				var isStr = action.type == generator.enums.action.basic.stringConstant ? true : false;
 				var contentBuffer = [];
@@ -1914,6 +1950,8 @@ var generator = {
 				var typeCasted = false;
 				var numericVariables = 0;
 				var checkStack = new ParenthesisStack();
+				var resultingData = 0;
+				var compoundVariableType = 0;
 
 				for (var j = 0; j < line.tokens.length; j++) {
 
@@ -1924,6 +1962,17 @@ var generator = {
 							var tmpVariable =
 								generator.refactor.getVariable(line.values[j]);
 
+							if (action.type == generator.enums.action.compoundAssignment &&
+								compoundVariableType == 0) {
+								compoundVariableType = tmpVariable.type;
+							}
+
+							if (resultingData == 0 ||
+								resultingData != generator.enums.c.data.type.float &&
+								resultingData != generator.enums.c.data.type.bool) {
+								resultingData = tmpVariable.type;
+							}
+
 							action.pushVariableState(tmpVariable);
 							if (tmpVariable.type == generator.enums.c.data.type.integer ||
 								tmpVariable.type == generator.enums.c.data.type.float ) {
@@ -1931,6 +1980,9 @@ var generator = {
 								if (!typeCasted && isStr) {
 									numericVariables += 1;
 								}
+							}
+							else if (tmpVariable.type == generator.enums.c.data.type.bool) {
+
 							}
 							else {
 
@@ -1949,7 +2001,11 @@ var generator = {
 					else if (line.tokens[j] == generator.enums.token.constant) {
 
 						try {
-							isInteger(line.values[j]);
+							if (resultingData != generator.enums.c.data.type.float &&
+								resultingData != generator.enums.c.data.type.bool) {
+
+								resultingData = isEquation(line.values[j]);
+							}
 						}
 						catch (exception) {
 							legal = false;
@@ -1966,6 +2022,17 @@ var generator = {
 							line.values[j] == generator.enums.python.symbol.string) {
 
 							typeCasted = true;
+							if (line.values[j] == generator.enums.python.symbol.string) {
+								isStr = true;
+								resultingData = generator.enums.c.data.type.string;
+							}
+						}
+						else if (line.values[j] == generator.enums.symbol.true ||
+								 line.values[j] == generator.enums.symbol.false) {
+
+							if (resultingData != generator.enums.c.data.type.string) {
+								resultingData = generator.enums.c.data.type.bool;
+							}
 						}
 					}
 					else if (line.tokens[j] == generator.enums.token.keyword) {
@@ -1976,7 +2043,7 @@ var generator = {
 							legal = false;
 						else if (funcType == generator.enums.c.data.type.string && !typeCasted) {
 							isStr = true;
-							variable.type = generator.enums.c.data.type.string;
+							resultingData = generator.enums.c.data.type.string;
 						}
 						else if (funcType == generator.enums.c.data.type.integer ||
 								funcType == generator.enums.c.data.type.float) {
@@ -2011,7 +2078,20 @@ var generator = {
 						}
 					}
 					else if (line.tokens[j] == generator.enums.token.stringConstant) {
+
 						isStr = true;
+						if (resultingData == 0 || !typeCasted) {
+							resultingData = generator.enums.c.data.type.string;
+						}
+					}
+				}
+
+				if (resultingData != compoundVariableType) {
+
+					if ((resultingData != generator.enums.c.data.type.int && resultingData != generator.enums.c.data.type.float && resultingData != generator.enums.c.data.type.bool) ||
+						(compoundVariableType != generator.enums.c.data.type.int && compoundVariableType != generator.enums.c.data.type.float && compoundVariableType != generator.enums.c.data.type.bool)) {
+
+						legal = false;
 					}
 				}
 
@@ -2137,7 +2217,10 @@ var generator = {
 									}
 								}
 							}
-
+							else if (line.values[j] == generator.enums.symbol.true ||
+									 line.values[j] == generator.enums.symbol.false) {
+									contentBuffer.push(line.values[j].toLowerCase());
+							}
 						}
 						else if (line.tokens[j] == generator.enums.token.stringConstant) {
 
@@ -2406,7 +2489,7 @@ var generator = {
 					}
 
 					line.contentStack.push(content);
-				
+
 				}
 
 				if (isStr && legal) {
@@ -2522,6 +2605,10 @@ var generator = {
 										stack.content.push(new StackContent());
 									}
 								}
+							}
+							else if (line.values[j] == generator.enums.symbol.true ||
+									 line.values[j] == generator.enums.symbol.false) {
+									contentBuffer.push(line.values[j].toLowerCase());
 							}
 						}
 						else if (line.tokens[j] == generator.enums.token.stringConstant) {
@@ -2857,6 +2944,13 @@ var generator = {
 					line.contentStack.push(result);
 				}
 
+				if (!legal) {
+
+					if (generator.options.detailedErrors) {
+						line.contentStack = [];
+						line.contentStack.push("//Invalid Syntax (" + line.values.join(" ") + ")");
+					}
+				}
 			}
 			else if (action.type == generator.enums.action.functionDefinition) {
 

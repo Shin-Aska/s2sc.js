@@ -38,23 +38,14 @@ var parser = {
 
 	grammar : [
 
-		"decl <- id = result F | id = const F | id = id F",
-
-		"cmpAsgn <- id += result F | id += const F | id += id F",
-		"cmpAsgn <- id *= result F | id *= const F | id *= id F",
-		"cmpAsgn <- id -= result F | id -= const F | id -= id F",
-		"cmpAsgn <- id /= result F | id /= const F | id /= id F",
-		"cmpAsgn <- id += sConst F",
-
-		"strDecl <- id = sConst F",
 		"funcStrDecl <- strDecl + func",
 
 		// For decimal
-		"const <- int ( sConst ) | int result | float ( sConst ) | float result",
+		"const <- int ( sConst ) | int result | float ( sConst ) | float result | int ( boolStmt ) | float ( boolStmt )",
 
 		// String Operation
 		"sConst <- id + sConst | sConst + id | sConst + sConst",
-		"sConst <- str ( sConst ) | str result | ( sConst )",
+		"sConst <- str ( sConst ) | str result | ( sConst ) | str ( boolStmt )",
 
 		//Function Defintion
 		"funcDef <- def id ( paramList ) : | funcDefInit :",
@@ -73,15 +64,33 @@ var parser = {
 		"paramList <- const , result | result , const | const, sConst | const , const",
 		"paramList <- paramList , id | paramList , sConst | paramLi st , result | paramList , const",
 
+		// Boolean keywords
+		"boolStmt <- True",
+		"boolStmt <- False",
+
 		// Boolean cases
 		"boolStmt <- id < id | id > id | id == id",
-		"boolStmt <- const < const | const > const | const == const",
-		"boolStmt <- id < const | id > const | id == const",
-		"boolStmt <- const < id | const > id | const == id",
-		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt",
+		"boolStmt <- const < const F | const > const F | const == const F",
+		"boolStmt <- id < const F | id > const F | id == const F",
+		"boolStmt <- const < id F | const > id F | const == id F",
+		"boolStmt <- sConst < const F | sConst > const F | sConst == const F",
+		"boolStmt <- sConst < id F | sConst > id F | sConst == id F",
+		"boolStmt <- const < sConst F | const > sConst F | const == sConst F",
+		"boolStmt <- id < sConst F | id > sConst F | id == sConst F",
+		"boolStmt <- sConst < sConst F | sConst > sConst F | sConst == sConst F",
 		"boolStmt <- result < const F | result > const F | result == const F",
+		"boolStmt <- const < result F | const > result F | const == result F",
 		"boolStmt <- result < id F | result > id F | result == id F",
+		"boolStmt <- id < result F | id > result F | id == result F",
 		"boolStmt <- result < result F | result > result F | result == result F",
+		"boolStmt <- result < sConst F | result > sConst F | result == sConst F",
+		"boolStmt <- boolStmt < id F | boolStmt > id F | boolStmt == id F",
+		"boolStmt <- boolStmt < const F | boolStmt > const F | boolStmt == const F",
+		"boolStmt <- boolStmt < result F | boolStmt > result F | boolStmt == result F",
+		"boolStmt <- id < boolStmt F | id > boolStmt F | id == boolStmt F",
+		"boolStmt <- const < boolStmt F | const > boolStmt F | const == boolStmt F",
+		"boolStmt <- result < boolStmt F | result > boolStmt F | result == boolStmt F",
+		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt",
 
 		// Arithmetic cases
 		"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",
@@ -106,9 +115,17 @@ var parser = {
 		"floorQuotient <- id // id | const // const | id // const | const // id | result // id | id // result | result // const | const // result",
 		"floorQuotient <- difference // id | difference // const | id // difference | const // difference | difference // result | result // difference | result // result",
 
-		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id )"
+		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id )",
 
+		"decl <- id = result F | id = const F | id = id F",
+		"strDecl <- id = sConst F",
+		"boolDecl <- id = boolStmt F",
 
+		"cmpAsgn <- id += result F | id += const F | id += id F | id += boolStmt F",
+		"cmpAsgn <- id *= result F | id *= const F | id *= id F | id += boolStmt F",
+		"cmpAsgn <- id -= result F | id -= const F | id -= id F | id += boolStmt F",
+		"cmpAsgn <- id /= result F | id /= const F | id /= id F | id += boolStmt F",
+		"cmpAsgn <- id += sConst F",
 	],
 
 /*
