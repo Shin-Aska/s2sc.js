@@ -69,6 +69,7 @@ var parser = {
 		"boolStmt <- False",
 
 		// Boolean cases
+		"boolStmt <- ( boolStmt )",
 		"boolStmt <- id < id | id > id | id == id",
 		"boolStmt <- const < const F | const > const F | const == const F",
 		"boolStmt <- id < const F | id > const F | id == const F",
