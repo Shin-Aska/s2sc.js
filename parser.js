@@ -54,6 +54,9 @@ var parser = {
 		//Class Definition
 		"classDef <- class id :",
 
+		//Conditional Statement
+		"condStmt <- if boolStmt : | elif boolStmt : | else :",
+
 		//Function Return Types
 		"id <- undefined",
 		"undefined <- kwd ( sConst ) | kwd result | kwd ( paramList ) | kwd ( )",
@@ -91,7 +94,7 @@ var parser = {
 		"boolStmt <- id < boolStmt F | id > boolStmt F | id == boolStmt F",
 		"boolStmt <- const < boolStmt F | const > boolStmt F | const == boolStmt F",
 		"boolStmt <- result < boolStmt F | result > boolStmt F | result == boolStmt F",
-		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt",
+		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt | not boolStmt F",
 
 		// Arithmetic cases
 		"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",
