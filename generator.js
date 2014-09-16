@@ -250,7 +250,7 @@ var generator = {
 			ambigious: function() {
 
 				generator.headers.insert("stdbool.h");
-				generator.unions.insert("ambigious", "\tbool *boolValue;\n\tint *intValue;\n\tfloat *floatValue;\n\tchar *charValue;\n\tvoid *voidValue;\n");
+				generator.unions.insert("ambigious", "\tbool *boolValue;\n\tint *intValue;\n\tfloat *floatValue;\n\tdouble *doubleValue;\n\tchar *charValue;\n\tvoid *voidValue;\n");
 			}
 		},
 
@@ -551,6 +551,132 @@ var generator = {
 
 	},
 
+	c: {
+
+		to: {
+
+			python: {
+
+				refactor: function (variable, buffer) {
+
+					if (variable.ambigious == false) {
+
+						var foundDeclarationLine = false;
+
+						if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
+
+							for (var i = 0; i < buffer.length; i++) {
+
+								var tmpVariableHolder = null;
+								var foundDecl =  null;
+
+								for (var j = 0; j < buffer[i].actionStack.length; j++) {
+
+									for (var k = 0; k < buffer[i].actionStack[j].state.length; k++) {
+
+										if (buffer[i].actionStack[j].state[k].name == variable.name) {
+											tmpVariableHolder = clone.variable(buffer[i].actionStack[j].state[k]);
+											foundDecl = buffer[i].actionStack[j].type;
+										}
+									}
+								}
+
+								if (foundDeclarationLine == false && tmpVariableHolder != null) {
+
+									for (var j = 0; j < buffer[i].values.length; j++) {
+
+										if (buffer[i].values[j] == variable.name) {
+
+											var content = "";
+											var allocContent = "";
+											foundDeclarationLine = true;
+
+											if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+												buffer[i].contentStack.shift();
+											}
+											else {
+												buffer[i].contentStack[0] = buffer[i].contentStack[0].replace(tmpVariableHolder.type + " ", "");
+											}
+
+											if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+
+												content += tmpVariableHolder.name + ".charValue";
+												allocContent = "( char * ) calloc(2048, sizeof( char ) )";
+											}
+											else {
+
+												content += tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
+												allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
+											}
+
+											for (var k = 0; k < buffer[i].tokens.length; k++) {
+
+												if (buffer[i].tokens[k] == generator.enums.token.stringConstant) {
+													buffer[i].contentStack[0] = buffer[i].contentStack[0].replace(buffer[i].values[k], buffer[i].id[k]);
+												}
+											}
+
+											buffer[i].contentStack[0] = buffer[i].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(*" + content + ")");
+
+											for (var k = 0; k < buffer[i].tokens.length; k++) {
+
+												if (buffer[i].tokens[k] == generator.enums.token.stringConstant) {
+													buffer[i].contentStack[0] = buffer[i].contentStack[0].replace(buffer[i].id[k], buffer[i].values[k]);
+												}
+											}
+
+											buffer[i].contentStack.unshift(content + " = " + allocContent);
+											buffer[i].contentStack.unshift("ambigious " + variable.name);
+											continue;
+										}
+									}
+								}
+								else if (tmpVariableHolder != null) {
+
+									for (var j = 0; j < buffer[i].contentStack.length; j++) {
+
+										var content = "";
+										var currentLine = buffer[i].contentStack[j];
+
+										if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+
+											content += tmpVariableHolder.name + ".charValue";
+										}
+										else {
+
+											content += "(*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value)";
+										}
+
+										for (var k = 0; k < buffer[i].tokens.length; k++) {
+
+											if (buffer[i].tokens[k] == generator.enums.token.stringConstant) {
+												currentLine = currentLine.replace(buffer[i].values[k], buffer[i].id[k]);
+											}
+										}
+
+										currentLine = currentLine.replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
+
+										for (var k = 0; k < buffer[i].tokens.length; k++) {
+
+											if (buffer[i].tokens[k] == generator.enums.token.stringConstant) {
+												currentLine = currentLine.replace(buffer[i].id[k], buffer[i].values[k]);
+											}
+										}
+
+										buffer[i].contentStack[j] = currentLine;
+									}
+								}
+							}
+
+							variable.ambigious = true;
+							generator.includer.dataType.ambigious();
+						}
+					}
+				}
+			},
+		},
+	},
+
 	// Generates code from a current language to a targetted language
 	generateCode: function (currentLanguage, targetLanguage, parseData) {
 
@@ -613,6 +739,10 @@ var generator = {
 			var action = new Action(parseData.symbol[i]);
             var line = new Line(i, tokens.slice(), values, tokenIDs);
             var legal = true;
+
+            // Grouped each type of statements into their appropriate actions,
+            // this approach will greatly increase the # of LOCs but I think
+            // this is the best approach because it consolidates bugs
             if (action.type == generator.enums.action.declaration ||
                 action.type == generator.enums.action.stringDeclaration ||
                 action.type == generator.enums.action.booleanDeclaration) {
@@ -854,119 +984,7 @@ var generator = {
 					}
 					else {
 
-						if (variable.ambigious == false) {
-
-							var foundDeclarationLine = false;
-
-							if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
-
-								for (var j = 0; j < buffer.length; j++) {
-
-									var tmpVariableHolder = null;
-									var foundDecl =  null;
-
-									for (var k = 0; k < buffer[j].actionStack.length; k++) {
-
-										for (var l = 0; l < buffer[j].actionStack[k].state.length; l++) {
-
-											if (buffer[j].actionStack[k].state[l].name == variable.name) {
-												tmpVariableHolder = clone.variable(buffer[j].actionStack[k].state[l]);
-												foundDecl = buffer[j].actionStack[k].type;
-											}
-										}
-									}
-
-									if (foundDeclarationLine == false && tmpVariableHolder != null) {
-
-										for (var k = 0; k < buffer[j].values.length; k++) {
-
-											if (buffer[j].values[k] == variable.name) {
-
-												var content = "";
-												var allocContent = "";
-												foundDeclarationLine = true;
-
-												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-													buffer[j].contentStack.shift();
-												}
-												else {
-													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(tmpVariableHolder.type + " ", "");
-												}
-
-												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-
-													content += tmpVariableHolder.name + ".charValue";
-													allocContent = "( char * ) calloc(2048, sizeof( char ) )";
-												}
-												else {
-
-													content += tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
-													allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
-												}
-
-												for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].values[l], buffer[j].id[l]);
-													}
-												}
-
-												buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(" + content + ")");
-
-												for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].id[l], buffer[j].values[l]);
-													}
-												}
-
-												buffer[j].contentStack.unshift(content + " = " + allocContent);
-												buffer[j].contentStack.unshift("ambigious " + variable.name);
-												continue;
-											}
-										}
-									}
-									else if (tmpVariableHolder != null) {
-
-										for (var k = 0; k < buffer[j].contentStack.length; k++) {
-
-											var content = "";
-											var currentLine = buffer[j].contentStack[k];
-
-											if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-
-												content += tmpVariableHolder.name + ".charValue";
-											}
-											else {
-
-												content += "(*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value)";
-											}
-
-											for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-													currentLine = currentLine.replace(buffer[j].values[l], buffer[j].id[l]);
-												}
-											}
-
-											currentLine = currentLine.replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
-
-											for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-													currentLine = currentLine.replace(buffer[j].id[l], buffer[j].values[l]);
-												}
-											}
-
-											buffer[j].contentStack[k] = currentLine;
-										}
-									}
-								}
-
-								variable.ambigious = true;
-								generator.includer.dataType.ambigious();
-							}
-						}
+						generator.c.to.python.refactor(variable, buffer);
 
 						if (variable.ambigious) {
 
@@ -1426,119 +1444,7 @@ var generator = {
 					}
 					else {
 
-						if (variable.ambigious == false) {
-
-							var foundDeclarationLine = false;
-
-							if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
-
-								for (var j = 0; j < buffer.length; j++) {
-
-									var tmpVariableHolder = null;
-									var foundDecl =  null;
-
-									for (var k = 0; k < buffer[j].actionStack.length; k++) {
-
-										for (var l = 0; l < buffer[j].actionStack[k].state.length; l++) {
-
-											if (buffer[j].actionStack[k].state[l].name == variable.name) {
-												tmpVariableHolder = clone.variable(buffer[j].actionStack[k].state[l]);
-												foundDecl = buffer[j].actionStack[k].type;
-											}
-										}
-									}
-
-									if (foundDeclarationLine == false && tmpVariableHolder != null) {
-
-										for (var k = 0; k < buffer[j].values.length; k++) {
-
-											if (buffer[j].values[k] == variable.name) {
-
-												var content = "";
-												var allocContent = "";
-												foundDeclarationLine = true;
-
-												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-													buffer[j].contentStack.shift();
-												}
-												else {
-													buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(tmpVariableHolder.type + " ", "");
-												}
-
-												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-
-													content += tmpVariableHolder.name + ".charValue";
-													allocContent = "( char * ) calloc(2048, sizeof( char ) )";
-												}
-												else {
-
-													content += "*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value";
-													allocContent = "( " + tmpVariableHolder.type + " * ) calloc(1, sizeof( " + tmpVariableHolder.type + " ) )";
-												}
-
-												for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].values[l], buffer[j].id[l]);
-													}
-												}
-
-												buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(" + content + ")");
-
-												for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-													if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-														buffer[j].contentStack[0] = buffer[j].contentStack[0].replace(buffer[j].id[l], buffer[j].values[l]);
-													}
-												}
-
-												buffer[j].contentStack.unshift(content.substring(1) + " = " + allocContent);
-												buffer[j].contentStack.unshift("ambigious " + variable.name);
-												continue;
-											}
-										}
-									}
-									else if (tmpVariableHolder != null) {
-
-										for (var k = 0; k < buffer[j].contentStack.length; k++) {
-
-											var content = "";
-											var currentLine = buffer[j].contentStack[k];
-
-											if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
-
-												content += tmpVariableHolder.name + ".charValue";
-											}
-											else {
-
-												content += "(*" + tmpVariableHolder.name + "." + tmpVariableHolder.type + "Value)";
-											}
-
-											for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-													currentLine = currentLine.replace(buffer[j].values[l], buffer[j].id[l]);
-												}
-											}
-
-											currentLine = currentLine.replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), content);
-
-											for (var l = 0; l < buffer[j].tokens.length; l++) {
-
-												if (buffer[j].tokens[l] == generator.enums.token.stringConstant) {
-													currentLine = currentLine.replace(buffer[j].id[l], buffer[j].values[l]);
-												}
-											}
-
-											buffer[j].contentStack[k] = currentLine;
-										}
-									}
-								}
-
-								variable.ambigious = true;
-								generator.includer.dataType.ambigious();
-							}
-						}
+						generator.c.to.python.refactor(variable, buffer);
 
 						if (variable.ambigious) {
 
@@ -1985,8 +1891,8 @@ var generator = {
 				var typeCasted = false;
 				var numericVariables = 0;
 				var checkStack = new ParenthesisStack();
-				var resultingData = 0;
-				var compoundVariableType = 0;
+				var resultingDataType = 0;
+				var compoundVariableDataType = 0;
 
 				for (var j = 0; j < line.tokens.length; j++) {
 
@@ -1998,14 +1904,14 @@ var generator = {
 								generator.refactor.getVariable(line.values[j]);
 
 							if (action.type == generator.enums.action.compoundAssignment &&
-								compoundVariableType == 0) {
-								compoundVariableType = tmpVariable.type;
+								compoundVariableDataType == 0) {
+								compoundVariableDataType = tmpVariable.type;
 							}
 
-							if (resultingData == 0 ||
-								resultingData != generator.enums.c.data.type.float &&
-								resultingData != generator.enums.c.data.type.bool) {
-								resultingData = tmpVariable.type;
+							if (resultingDataType == 0 ||
+								resultingDataType != generator.enums.c.data.type.float &&
+								resultingDataType != generator.enums.c.data.type.bool) {
+								resultingDataType = tmpVariable.type;
 							}
 
 							action.pushVariableState(tmpVariable);
@@ -2036,10 +1942,10 @@ var generator = {
 					else if (line.tokens[j] == generator.enums.token.constant) {
 
 						try {
-							if (resultingData != generator.enums.c.data.type.float &&
-								resultingData != generator.enums.c.data.type.bool) {
+							if (resultingDataType != generator.enums.c.data.type.float &&
+								resultingDataType != generator.enums.c.data.type.bool) {
 
-								resultingData = isEquation(line.values[j]);
+								resultingDataType = isEquation(line.values[j]);
 							}
 						}
 						catch (exception) {
@@ -2059,14 +1965,14 @@ var generator = {
 							typeCasted = true;
 							if (line.values[j] == generator.enums.python.symbol.string) {
 								isStr = true;
-								resultingData = generator.enums.c.data.type.string;
+								resultingDataType = generator.enums.c.data.type.string;
 							}
 						}
 						else if (line.values[j] == generator.enums.symbol.true ||
 								 line.values[j] == generator.enums.symbol.false) {
 
 							if (!typeCasted) {
-								resultingData = generator.enums.c.data.type.bool;
+								resultingDataType = generator.enums.c.data.type.bool;
 							}
 						}
 					}
@@ -2078,7 +1984,7 @@ var generator = {
 							legal = false;
 						else if (funcType == generator.enums.c.data.type.string && !typeCasted) {
 							isStr = true;
-							resultingData = generator.enums.c.data.type.string;
+							resultingDataType = generator.enums.c.data.type.string;
 						}
 						else if (funcType == generator.enums.c.data.type.integer ||
 								funcType == generator.enums.c.data.type.float) {
@@ -2115,16 +2021,25 @@ var generator = {
 					else if (line.tokens[j] == generator.enums.token.stringConstant) {
 
 						isStr = true;
-						if (resultingData == 0 || !typeCasted) {
-							resultingData = generator.enums.c.data.type.string;
+						if (resultingDataType == 0 || !typeCasted) {
+							resultingDataType = generator.enums.c.data.type.string;
 						}
 					}
 				}
 
-				if (resultingData != compoundVariableType) {
+				if (resultingDataType != compoundVariableDataType &&
+					action.type == generator.enums.action.compoundAssignment) {
 
-					if ((resultingData != generator.enums.c.data.type.int && resultingData != generator.enums.c.data.type.float && resultingData != generator.enums.c.data.type.bool) ||
-						(compoundVariableType != generator.enums.c.data.type.int && compoundVariableType != generator.enums.c.data.type.float && compoundVariableType != generator.enums.c.data.type.bool)) {
+					if ((
+						 resultingDataType != generator.enums.c.data.type.integer && 
+						 resultingDataType != generator.enums.c.data.type.float && 
+						 resultingDataType != generator.enums.c.data.type.bool
+						) ||
+						(
+						 compoundVariableDataType != generator.enums.c.data.type.integer && 
+						 compoundVariableDataType != generator.enums.c.data.type.float && 
+						 compoundVariableDataType != generator.enums.c.data.type.bool
+						)) {
 
 						legal = false;
 					}
