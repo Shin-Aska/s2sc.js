@@ -94,6 +94,8 @@ var parser = {
 		"boolStmt <- id < boolStmt F | id > boolStmt F | id == boolStmt F",
 		"boolStmt <- const < boolStmt F | const > boolStmt F | const == boolStmt F",
 		"boolStmt <- result < boolStmt F | result > boolStmt F | result == boolStmt F",
+		"boolStmt <- boolStmt + boolStmt | boolStmt - boolStmt | boolStmt * boolStmt",
+		"boolStmt <- boolStmt / boolStmt | boolStmt % boolStmt | boolStmt ** boolStmt",
 		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt | not boolStmt F",
 
 		// Arithmetic cases
