@@ -98,7 +98,9 @@ $( document ).ready(function() {
 			}
 			catch (exception) {
 
-				alert(exception);
+				$("#console").contents().find('html').html(exception);
+				document.getElementById('output').value = "";
+				editAreaLoader.setValue("output", "");
 			}
 		}
 	});

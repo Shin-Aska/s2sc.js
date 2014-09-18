@@ -405,6 +405,9 @@ var tokenizer = {
 						}
 						else {
 							lineBuffer += text[i];
+							if (i + 1 == text.length) {
+								throw "Non-terminating string Exception occured";
+							}
 						}
 					}
 					else if (flag.getTypeFlag() == "number") {
