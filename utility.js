@@ -65,8 +65,11 @@ var isEquation = function(arr) {
 		try {
 
 			var tmp = generator.refactor.getVariable(n[i]);
-			if ((tmp.type == "int" || tmp.type == floatRepresentation) && (dataType != "string" || dataType == "")) {
+			if ((tmp.type == "int" || tmp.type == floatRepresentation) && (dataType != "string")) {
 				dataType = tmp.type;
+			}
+			else if (dataType == "") {
+                dataType = tmp.type;
 			}
 		}
 		catch (ex) {

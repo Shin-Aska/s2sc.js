@@ -789,9 +789,7 @@ var generator = {
 									tmpVariable.type == generator.enums.c.data.type.bool) {
 
 									if (variable.type == 0 ||
-										variable.type != generator.enums.c.data.type.float &&
-										variable.type != generator.enums.c.data.type.bool) {
-
+										variable.type != generator.enums.c.data.type.float) {
 										variable.type = tmpVariable.type;
 									}
 
@@ -804,9 +802,17 @@ var generator = {
 
 									if (!typeCasted) {
 										isStr = true;
-										variable.type = generator.enums.c.data.type.string;
-									}
+										if (variable.type == generator.enums.c.data.type.integer ||
+                                            variable.type == generator.enums.c.data.type.float ||
+                                            variable.type == generator.enums.c.data.type.bool) {
 
+                                            legal = false;
+                                        }
+                                        else {
+
+                                            variable.type = generator.enums.c.data.type.string;
+                                        }
+									}
 								}
 				            }
 
@@ -819,8 +825,7 @@ var generator = {
 					else if (line.tokens[j] == generator.enums.token.constant) {
 
 						if (variable.type == 0 ||
-						   (variable.type != generator.enums.c.data.type.float &&
-							variable.type != generator.enums.c.data.type.bool)) {
+						   (variable.type != generator.enums.c.data.type.float)) {
 							try {
 
 								variable.type = isInteger(line.values[j]) ?
@@ -828,6 +833,7 @@ var generator = {
 									generator.enums.c.data.type.float;
 							}
 							catch (exception) {
+
 								legal = false;
 							}
 						}
@@ -874,7 +880,11 @@ var generator = {
 						else if (line.values[j] == generator.enums.symbol.true ||
 								 line.values[j] == generator.enums.symbol.false) {
 
-                            variable.type = generator.enums.c.data.type.bool;
+                            generator.headers.insert("stdbool.h");
+                            if (variable.type == 0) {
+
+                                variable.type = generator.enums.c.data.type.bool;
+                            }
 						}
 					}
 					else if (line.tokens[j] == generator.enums.token.keyword) {
@@ -2031,13 +2041,13 @@ var generator = {
 					action.type == generator.enums.action.compoundAssignment) {
 
 					if ((
-						 resultingDataType != generator.enums.c.data.type.integer && 
-						 resultingDataType != generator.enums.c.data.type.float && 
+						 resultingDataType != generator.enums.c.data.type.integer &&
+						 resultingDataType != generator.enums.c.data.type.float &&
 						 resultingDataType != generator.enums.c.data.type.bool
 						) ||
 						(
-						 compoundVariableDataType != generator.enums.c.data.type.integer && 
-						 compoundVariableDataType != generator.enums.c.data.type.float && 
+						 compoundVariableDataType != generator.enums.c.data.type.integer &&
+						 compoundVariableDataType != generator.enums.c.data.type.float &&
 						 compoundVariableDataType != generator.enums.c.data.type.bool
 						)) {
 

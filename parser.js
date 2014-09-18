@@ -101,18 +101,23 @@ var parser = {
 		// Arithmetic cases
 		"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",
 		"product <- product * id | product * const | id * product | const * product | product * product | product * result | result * product | result * result",
+        "product <- id * boolStmt | boolStmt * id | const * boolStmt | boolStmt * const | boolStmt * result | result * boolStmt",
 
 		"quotient <- id / id | const / const | id / const | const / id | result / id | id / result | result / const | const / result",
 		"quotient <- quotient / id | quotient / const | id / quotient | const / quotient | quotient / quotient | quotient / result | result / quotient | result / result",
+        "quotient <- id / boolStmt | boolStmt / id | const / boolStmt | boolStmt / const | boolStmt / result | result / boolStmt",
 
 		"sum <- id + id | const + const | id + const | const + id | result + id | id + result | result + const | const + result",
 		"sum <- sum + const | sum + id | id + sum | const + sum | sum + result | result + sum | result + result",
+        "sum <- id + boolStmt | boolStmt + id | const + boolStmt | boolStmt + const | boolStmt + result | result + boolStmt",
 
 		"difference <- id - id | const - const | id - const | const - id | result - id | id - result | result - const | const - result",
 		"difference <- difference - id | difference - const | id - difference | const - difference | difference - result | result - difference | result - result",
+        "difference <- id - boolStmt | boolStmt - id | const - boolStmt | boolStmt - const | boolStmt - result | result - boolStmt",
 
 		"remainder <- id % id | const % const | id % const | const % id | result % id | id % result | result % const | const % result",
 		"remainder <- difference % id | difference % const | id % difference | const % difference | difference % result | result % difference | result % result",
+        "remainder<- id % boolStmt | boolStmt % id | const % boolStmt | boolStmt % const | boolStmt % result | result % boolStmt",
 
 		"incr <- id ++ | ++ id",
 		"exp <- id ** id | const ** const | id ** const | const ** id | result ** id | id ** result | result ** const | const ** result",
