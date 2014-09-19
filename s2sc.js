@@ -47,7 +47,6 @@ var s2sc =  {
 		for (var i = 0; i < s2sc.map.length; i++) {
 
 			var result = "";
-
 			if (s2sc.map[i].length != 0) {
 				result = parser.parse(s2sc.map[i]);
 			}

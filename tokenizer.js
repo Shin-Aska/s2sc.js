@@ -247,6 +247,10 @@ var tokenizer = {
 					skip = true;
 				}
 
+				if (text[i] == "\n") {
+					skip = true;
+				}
+
 				if (!skip) {
 
 					if (flag.getTypeFlag() == "none") {
@@ -512,7 +516,7 @@ var tokenizer = {
 
 				if (text[i + 1] == "\n" || i + 1 >= text.length) {
 
-					if (lineBuffer != "") {
+					if (lineBuffer.length != 0) {
 
 						if (flag.getTypeFlag() == "other") {
 							var found = false;
