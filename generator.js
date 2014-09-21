@@ -2712,7 +2712,7 @@ var generator = {
 											}
 										}
 									}
-									else if (operationType == generator.enums.c.data.type.integer || operationType == generator.enums.c.data.type.float) {
+									else if (operationType == generator.enums.c.data.type.integer) {
 
 										var list;
 										var candidate;
@@ -2722,10 +2722,12 @@ var generator = {
 											result = currentContentBuffer.data.join(" ");
 										}
 										else if (currentFunction == generator.enums.python.data.type.float) {
-											result = currentContentBuffer.data.join(" ");
+											result = "((" + generator.enums.c.data.type.float + ")(" + currentContentBuffer.data.join(" ") + "))";
 										}
 										else if (currentFunction == generator.enums.python.symbol.string) {
-											result = currentContentBuffer.data.join(" ");
+											list = dictionary.pages.findWordsByKeywords(["integer-only", "data-type-conversion", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data.join(" "));
 										}
 										else {
 											//alert(currentContentBuffer.data.join("-"));
@@ -2733,6 +2735,37 @@ var generator = {
 
 												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
 												result = candidate.function(currentContentBuffer.data);
+
+											}
+											catch (exception) {
+
+											}
+										}
+									}
+									else if (operationType == generator.enums.c.data.type.float) {
+
+										var list;
+										var candidate;
+										var result = "";
+										if (currentFunction == generator.enums.c.data.type.integer) {
+											result = "((" + generator.enums.c.data.type.integer + ")(" + currentContentBuffer.data.join(" ") + "))";
+										}
+										else if (currentFunction == generator.enums.symbol.float) {
+											result = currentContentBuffer.data.join(" ");
+										}
+										else if (currentFunction == generator.enums.python.symbol.string) {
+
+											list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
+											candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+											result = candidate.function(currentContentBuffer.data.join(" "));
+										}
+										else {
+											// Function Analyser here
+											try {
+
+												var candidate = dictionary.search.equivalentWord(targetLanguage, dictionary.pages.findWord(currentFunction, currentLanguage));
+												result = candidate.function(currentContentBuffer.data);
+
 											}
 											catch (exception) {
 
@@ -2878,6 +2911,10 @@ var generator = {
 									var list = dictionary.pages.findWordsByKeywords(["float-only", "data-type-conversion", "C-language"]);
 									var candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
 									paramList[j] = candidate.function(paramList[j]);
+								}
+								else if (link.type == "string") {
+
+									//alert("@@@@");
 								}
 							}
 						}
