@@ -2951,6 +2951,21 @@ var generator = {
 			}
 			else if (action.type == generator.enums.action.functionDefinition) {
 
+                var funcName = "";
+                var funcArgs = [];
+                for (var j = 0; j < line.tokens.length; j++) {
+
+                    if (line.tokens[j] == generator.enums.token.identifier) {
+
+                        if (funcName == "") {
+                            funcName = line.values[j];
+                        }
+                        else {
+                            funcArgs.push(line.values[j]);
+                        }
+                    }
+                }
+
 			}
 			else if (action.type == generator.enums.error.parse) {
 

@@ -16,7 +16,7 @@ In your javascript console, by calling out s2sc.convert() will instruct s2sc to
 generate an equivalent C code from the existing python code statement.
 
 ```javascript
-s2sc.convert(s2sc.language.python, s2sc.language.c, "a = 5 ** 23 + 5 ** 2 + pow(3+3434, 4)")
+s2sc.convert(s2sc.language.python2, s2sc.language.c, "a = 5 ** 23 + 5 ** 2 + pow(3+3434, 4)")
 ```
 
 ```C

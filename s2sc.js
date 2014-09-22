@@ -37,7 +37,7 @@ var s2sc =  {
 			dictionary.c.initialize();
 		}
 
-		if (originalLanguage == s2sc.language.python || targetLanguage == s2sc.language.python) {
+		if (originalLanguage == s2sc.language.python2 || targetLanguage == s2sc.language.python2) {
 			dictionary.python.initialize();
 		}
 
@@ -65,7 +65,8 @@ var s2sc =  {
     language: {
 
 		c: "C-language",
-		python: "Python-language"
+		python2: "Python-language",
+		python3: "Python3-language"
     },
 
     parser: {
