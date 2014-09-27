@@ -119,7 +119,6 @@ var parser = {
 		"remainder <- difference % id | difference % const | id % difference | const % difference | difference % result | result % difference | result % result",
         "remainder<- id % boolStmt | boolStmt % id | const % boolStmt | boolStmt % const | boolStmt % result | result % boolStmt",
 
-		"incr <- id ++ | ++ id",
 		"exp <- id ** id | const ** const | id ** const | const ** id | result ** id | id ** result | result ** const | const ** result",
 		"exp <- difference ** id | difference ** const | id ** difference | const ** difference | difference ** result | result ** difference | result ** result",
 
@@ -128,6 +127,7 @@ var parser = {
 
 		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id )",
 
+        "const <- + const | + id | - const | - id",
 		"decl <- id = result F | id = const F | id = id F",
 		"strDecl <- id = sConst F",
 		"boolDecl <- id = boolStmt F",

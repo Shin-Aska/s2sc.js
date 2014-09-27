@@ -115,6 +115,26 @@ function Func (Fname, Fparam, Ftype, Fcontent) {
 	this.content = Fcontent;
 }
 
+
+// Temporary Variable State Object used by
+// generator.generateCode()'s tmpVariableStack
+// variable
+function tmpVariableState (TrefactorIndex, TdefinitionStackIndex) {
+
+    this.codeRefIndex  = TrefactorIndex;
+    this.defStackIndex = TdefinitionStackIndex;
+}
+
+// Definition Holder Object used by
+// generator.generateCode()'s definitionStack
+// variable
+function tmpDefinitionState (TfuncName, TfuncArgs, TfuncLines) {
+
+    this.name = TfuncName;
+    this.arguments = TfuncArgs;
+    this.contains = TfuncLines;
+}
+
 // Parsed Data that that is consolidated
 // to a single object.
 function ParseData (Pmap, Psymbol) {
@@ -684,9 +704,6 @@ var generator = {
 		var bodyText = "";
 		var result = "";
 		var buffer = new Array();
-		//var currentLanguage = "Python-language";
-		//var targetLanguage = "C-language";
-
 
 		generator.headers.clear();
 		generator.defines.clear();
@@ -694,6 +711,14 @@ var generator = {
 		generator.unions.clear();
 		generator.structures.clear();
 		generator.functions.clear();
+
+        // Container of loop and functions
+        // as it is scanned by the generator
+        // also keeps in track of the temporary
+        // variables declared inside them.
+
+        var tmpVariableStack = [];
+		var definitionStack  = [];
 
 		for (var i = 0; i < parseData.symbol.length; i++) {
 
@@ -989,6 +1014,11 @@ var generator = {
 
 					if (newDeclaration) {
 
+                        if (definitionStack.length > 0) {
+
+                            variable.temporary = true;
+                            tmpVariableStack.push(new tmpVariableState(generator.refactor.variableList.length, definitionStack.length - 1));
+                        }
 						generator.refactor.insertVariable(variable);
 						contentBuffer.push(variable.type);
 					}
@@ -1448,6 +1478,11 @@ var generator = {
 
                     if (newDeclaration) {
 
+                        if (definitionStack.length > 0) {
+
+                            variable.temporary = true;
+                            tmpVariableStack.push(new tmpVariableState(generator.refactor.variableList.length, definitionStack.length - 1));
+                        }
 						generator.refactor.insertVariable(variable);
 						contentBuffer.push(variable.type);
 						line.contentStack.push("char *" + variable.name + " = " + " ( char * ) calloc(2048, sizeof( char ))");
@@ -2965,6 +3000,8 @@ var generator = {
                         }
                     }
                 }
+
+                definitionStack.push(new tmpDefinitionState(funcName, funcArgs, new Array()));
 
 			}
 			else if (action.type == generator.enums.error.parse) {
