@@ -48,7 +48,7 @@ var parser = {
 		"sConst <- str ( sConst ) | str result | ( sConst ) | str ( boolStmt )",
 
 		//Function Defintion
-		"funcDef <- def id ( paramList ) : | funcDefInit :",
+		"funcDef <- def id ( paramList ) : | def id ( ) : | funcDefInit : | def id :",
 		"funcDefInit <- def id ( id )",
 
 		//Class Definition
@@ -57,7 +57,7 @@ var parser = {
 		//Conditional Statement
 		"condStmt <- if boolStmt : | elif boolStmt : | else :",
 
-		//Function Return Types
+		//Function Parameters
 		"id <- undefined",
 		"undefined <- kwd ( sConst ) | kwd result | kwd ( paramList ) | kwd ( )",
 		"paramList <- result , result | id , id | sConst , sConst",
@@ -66,6 +66,11 @@ var parser = {
 		"paramList <- const , id | id , const | sConst , const",
 		"paramList <- const , result | result , const | const, sConst | const , const",
 		"paramList <- paramList , id | paramList , sConst | paramLi st , result | paramList , const",
+
+		// Return Types
+		"returnUndefined <- return F | return id F",
+		"returnConst <- return const | return result",
+		"returnString <- return sConst",
 
 		// Boolean keywords
 		"boolStmt <- True",

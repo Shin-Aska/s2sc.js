@@ -27,39 +27,50 @@ var s2sc =  {
 
     convert: function(originalLanguage, targetLanguage, data) {
 
-		s2sc.clear();
+		var count = 2;
+		var result = "";
 
-		if (generator.options.useDoubleInsteadOfFloat) {
-			generator.enums.c.data.type.float = "double";
-		}
+		do {
 
-		if (originalLanguage == s2sc.language.c || targetLanguage == s2sc.language.c) {
-			dictionary.c.initialize();
-		}
+			s2sc.clear();
+			dictionary.pages.clear();
 
-		if (originalLanguage == s2sc.language.python2 || targetLanguage == s2sc.language.python2) {
-			dictionary.python.initialize();
-		}
-
-		s2sc.map = tokenizer.python.tokenize(data);
-		s2sc.symbol = [];
-
-		for (var i = 0; i < s2sc.map.length; i++) {
-
-			var result = "";
-			if (s2sc.map[i].length != 0) {
-				result = parser.parse(s2sc.map[i]);
-			}
-			else {
-				result.symbol = "<ignore>";
-				result.valid = true;
+			if (generator.options.useDoubleInsteadOfFloat) {
+				generator.enums.c.data.type.float = "double";
 			}
 
-			result.symbol = result.symbol !== "" ? result.symbol : "<parse_error>";
-			s2sc.symbol.push(result.symbol);
-		}
+			if (originalLanguage == s2sc.language.c || targetLanguage == s2sc.language.c) {
+				dictionary.c.initialize();
+			}
 
-		return generator.generateCode(originalLanguage, targetLanguage, new ParseData(s2sc.map, s2sc.symbol));
+			if (originalLanguage == s2sc.language.python2 || targetLanguage == s2sc.language.python2) {
+				dictionary.python.initialize();
+			}
+
+			s2sc.map = tokenizer.python.tokenize(data);
+			s2sc.symbol = [];
+
+			for (var i = 0; i < s2sc.map.length; i++) {
+
+				var result = "";
+				if (s2sc.map[i].length != 0) {
+					result = parser.parse(s2sc.map[i]);
+				}
+				else {
+					result.symbol = "<ignore>";
+					result.valid = true;
+				}
+
+				result.symbol = result.symbol !== "" ? result.symbol : "<parse_error>";
+				s2sc.symbol.push(result.symbol);
+			}
+
+			result = generator.generateCode(originalLanguage, targetLanguage, new ParseData(s2sc.map, s2sc.symbol));
+			count -= 1;
+		} while (generator.reparse && count > 0);
+
+		generator.reparse = false;
+		return result;
     },
 
     language: {

@@ -201,6 +201,11 @@ var dictionary = {
 			return -1;
 		},
 
+		clear: function() {
+
+			dictionary.pages.word = new Array();
+		},
+
 		// Returns a reference of a word in s2sc's word base
 		findWord: function(name, language) {
 
@@ -209,7 +214,7 @@ var dictionary = {
 				return dictionary.pages.word[index];
 			}
 
-			throw "Cannot find word on dictionary";
+			throw "Cannot find any information about \"" + name + "\" in the dictionary.<br>";
 		},
 
 		// Returns a list of words that matches at least one keyword given into it.
@@ -244,15 +249,7 @@ var dictionary = {
 	// C initialization related function (s2sc calls this function)
 	c: {
 
-	    initialized: false,
 		initialize: function () {
-
-            if (dictionary.c.initialized) {
-                return;
-            }
-            else {
-                dictionary.c.initialized = true;
-            }
 
 			if (generator.options.useDoubleInsteadOfFloat) {
 				dictionary.pages.addWord(new Word(
@@ -545,15 +542,7 @@ var dictionary = {
 	// Python initialization related function (s2sc calls this function)
 	python: {
 
-        initialized: false,
 		initialize: function() {
-
-            if (dictionary.python.initialized) {
-                return;
-            }
-            else {
-                dictionary.python.initialized = true;
-            }
 
 			dictionary.pages.addWord(new Word(
 				"float", function(value) {

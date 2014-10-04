@@ -224,8 +224,28 @@ var tokenizer = {
 				"&", "|",
 			],
 			reserveWord: ["int", "float", "str", "def", "class", "True", "False",
-				"and", "or", "not", "if", "elif", "else"
-			]
+				"and", "or", "not", "if", "elif", "else", "return"
+			],
+
+			add: {
+
+				keyword: function(name) {
+
+					var found = false;
+					for (var i = 0; i < tokenizer.python.token.keyword.length; i++) {
+
+						if (tokenizer.python.token.keyword[i] == name) {
+							found = true;
+							break;
+						}
+					}
+
+					if (!found) {
+
+						tokenizer.python.token.keyword.push(name);
+					}
+				}
+			}
 		},
 
 		tokenize: function(text) {

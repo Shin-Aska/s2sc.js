@@ -119,20 +119,25 @@ function Func (Fname, Fparam, Ftype, Fcontent) {
 // Temporary Variable State Object used by
 // generator.generateCode()'s tmpVariableStack
 // variable
-function tmpVariableState (TrefactorIndex, TdefinitionStackIndex) {
+function tmpVariableState (TrefactorIndex) {
 
-    this.codeRefIndex  = TrefactorIndex;
-    this.defStackIndex = TdefinitionStackIndex;
+    this.referenceIndex  = TrefactorIndex;
 }
 
 // Definition Holder Object used by
 // generator.generateCode()'s definitionStack
 // variable
-function tmpDefinitionState (TfuncName, TfuncArgs, TfuncLines) {
+function tmpDefinitionState (TfuncName, TfuncArgs, TfuncIndention, TfuncLines, Ttype) {
 
     this.name = TfuncName;
     this.arguments = TfuncArgs;
+    this.indention = TfuncIndention; // Used for determining indention level
+                                     // in order to know if a particular statement
+                                     // still belongs to a function/loop/structure
+                                     // in python
     this.contains = TfuncLines;
+    this.definitionType = Ttype;
+    this.variables = new Array();
 }
 
 // Parsed Data that that is consolidated
@@ -159,6 +164,11 @@ var generator = {
 	// Namespace that holds the static keywords of a
 	// language, this is done to make it as verbose as possible.
 	enums: {
+
+		definition: {
+
+			function: "function"
+		},
 
 		c: {
 
@@ -222,11 +232,26 @@ var generator = {
 				boolean: "boolStmt",
 			},
 
+			return: {
+
+				void: "returnUndefined",
+				constant: "returnConst",
+				string: "returnString"
+			},
+
             declaration: "decl",
             functionDefinition: "funcDef",
             stringDeclaration: "strDecl",
             compoundAssignment: "cmpAsgn",
             booleanDeclaration: "boolDecl",
+        },
+
+        shared: {
+
+			c_python: {
+
+				return: "return",
+			}
         },
 
         symbol: {
@@ -534,9 +559,18 @@ var generator = {
 
 		variableList: [],
 
-		findVariable: function (name) {
+		findVariable: function (name, debug) {
+
+			if (typeof(debug) === "undefined") {
+				debug = false;
+			}
 
 			for (var i = 0; i < generator.refactor.variableList.length; i++) {
+
+				if (debug) {
+					alert(generator.refactor.variableList[i].name + " ===" + name);
+				}
+
 				if (generator.refactor.variableList[i].name == name) {
 					return i;
 				}
@@ -564,6 +598,17 @@ var generator = {
 			}
 		},
 
+		removeVariable: function (name) {
+
+			var index = generator.refactor.findVariable(name);
+			if (index != -1) {
+				generator.refactor.variableList.splice(index, 1);
+			}
+			else {
+				alert(name);
+			}
+		},
+
 		clear: function () {
 
 			generator.refactor.variableList = new Array();
@@ -583,7 +628,7 @@ var generator = {
 
 						var foundDeclarationLine = false;
 
-						if (variable.type != generator.refactor.variableList[variable.lineDeclared].type) {
+						if (variable.type != generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type) {
 
 							for (var i = 0; i < buffer.length; i++) {
 
@@ -704,6 +749,7 @@ var generator = {
 		var bodyText = "";
 		var result = "";
 		var buffer = new Array();
+		var hasReturnType = false;
 
 		generator.headers.clear();
 		generator.defines.clear();
@@ -717,19 +763,69 @@ var generator = {
         // also keeps in track of the temporary
         // variables declared inside them.
 
-        var tmpVariableStack = [];
 		var definitionStack  = [];
 
 		for (var i = 0; i < parseData.symbol.length; i++) {
 
-            var tokens = tokenizer.detokenize(parseData.map[i]);
-            var tokenIDs = tokens.slice();
-            var values = tokens.slice();
+            var tokens = [], tokensAheadByOne = [];
+            var values = [], valuesAheadByOne = [];
+            var tokenIDs = [];
+            var tabCount = 0, tabCountAheadByOne = -1;
+
+			if (i + 1 != parseData.symbol.length) {
+
+				tokensAheadByOne = tokenizer.detokenize(parseData.map[i + 1]);
+				valuesAheadByOne = tokensAheadByOne.slice();
+				tabCountAheadByOne = 0;
+
+				for (var j = 0; j < valuesAheadByOne.length; j++) {
+
+					var currentSelector = valuesAheadByOne[j].replace(/\d+/g, '');
+					var currentIndex 	= valuesAheadByOne[j].replace(/[^0-9.]/g, '');
+
+					tokens[j] = currentSelector;
+					if (currentSelector == generator.enums.token.keyword) {
+
+						valuesAheadByOne[j] = tokenizer.token.keyword[currentIndex - 1].value;
+					}
+					else if (currentSelector == generator.enums.token.identifier) {
+
+						valuesAheadByOne[j] = tokenizer.token.identifier[currentIndex - 1].value;
+					}
+					else if (currentSelector == generator.enums.token.symbol) {
+
+						valuesAheadByOne[j] = tokenizer.token.symbol[currentIndex - 1].value;
+					}
+					else if (currentSelector == generator.enums.token.constant) {
+
+						valuesAheadByOne[j] = tokenizer.token.constant[currentIndex - 1].value;
+					}
+					else if (currentSelector == generator.enums.token.reserveWord) {
+
+						valuesAheadByOne[j] = tokenizer.token.reserveWord[currentIndex - 1].value;
+					}
+					else if (currentSelector == generator.enums.token.stringConstant) {
+
+						valuesAheadByOne[j] = "\""
+						+ tokenizer.token.string[currentIndex - 1].value + "\"";
+					}
+					else if (currentSelector == generator.enums.token.tab) {
+						valuesAheadByOne[j] = "\t";
+						tabCountAheadByOne += 1;
+					}
+				}
+            }
+
+			tokens = tokenizer.detokenize(parseData.map[i]);
+			values = tokens.slice();
+			tokenIDs = tokens.slice();
+
 
             for (var j = 0; j < values.length; j++) {
 
                 var currentSelector = values[j].replace(/\d+/g, '');
                 var currentIndex 	= values[j].replace(/[^0-9.]/g, '');
+
                 tokens[j] = currentSelector;
                 if (currentSelector == generator.enums.token.keyword) {
 
@@ -758,11 +854,13 @@ var generator = {
                 }
                 else if (currentSelector == generator.enums.token.tab) {
                 	values[j] = "\t";
+                	tabCount += 1;
                 }
             }
 
-			var action = new Action(parseData.symbol[i]);
             var line = new Line(i, tokens.slice(), values, tokenIDs);
+
+			var action = new Action(parseData.symbol[i]);
             var legal = true;
 
             // Grouped each type of statements into their appropriate actions,
@@ -790,7 +888,7 @@ var generator = {
 
 							if (!initialize) {
 
-								variable = generator.refactor.findVariable(values[0]);
+								variable = generator.refactor.findVariable(line.values[j]);
 								if (variable == -1) {
 
 									variable = new Variable(line.values[j], 0, i);
@@ -848,6 +946,7 @@ var generator = {
 						}
 					}
 					else if (line.tokens[j] == generator.enums.token.constant) {
+
 
 						if (variable.type == 0 ||
 						   (variable.type != generator.enums.c.data.type.float)) {
@@ -1004,11 +1103,13 @@ var generator = {
 
 					legal = false;
 				}
-
 				if (variable.type == generator.enums.c.data.type.bool) {
 
 					generator.headers.insert("stdbool.h");
 				}
+
+				if (generator.reparse)
+					alert(newDeclaration + " " + line.values);
 
                 if (!isStr && legal) {
 
@@ -1017,8 +1118,9 @@ var generator = {
                         if (definitionStack.length > 0) {
 
                             variable.temporary = true;
-                            tmpVariableStack.push(new tmpVariableState(generator.refactor.variableList.length, definitionStack.length - 1));
+                            definitionStack[definitionStack.length - 1].variables.push(variable.name);
                         }
+
 						generator.refactor.insertVariable(variable);
 						contentBuffer.push(variable.type);
 					}
@@ -1028,25 +1130,25 @@ var generator = {
 
 						if (variable.ambigious) {
 
-							if (generator.refactor.variableList[variable.lineDeclared].type != variable.type) {
+							if (generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type != variable.type) {
 
 								var fcontent = "";
 								var content = "";
 								var allocContent = "";
 
-								if (generator.refactor.variableList[variable.lineDeclared].type == generator.enums.c.data.type.string) {
+								if (generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type == generator.enums.c.data.type.string) {
 
-									fcontent += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+									fcontent += generator.refactor.variableList[generator.refactor.findVariable(variable.name)].name + ".charValue";
 								}
 								else {
 
-									fcontent += generator.refactor.variableList[variable.lineDeclared].name + "." + generator.refactor.variableList[variable.lineDeclared].type + "Value";
+									fcontent += generator.refactor.variableList[generator.refactor.findVariable(variable.name)].name + "." + generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type + "Value";
 								}
 
 								if (variable.type == generator.enums.c.data.type.string) {
 
 									allocContent = "( char * ) calloc(2048, sizeof( char ) )";
-									content += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+									content += generator.refactor.variableList[generator.refactor.findVariable(variable.name)].name + ".charValue";
 								}
 								else {
 
@@ -1059,7 +1161,7 @@ var generator = {
 							}
 						}
 
-						generator.refactor.variableList[variable.lineDeclared] = variable;
+						generator.refactor.variableList[generator.refactor.findVariable(variable.name)] = variable;
 					}
 
 					action.pushVariableState(variable);
@@ -1071,6 +1173,7 @@ var generator = {
 					var floor = false;
 					var stack = new ParenthesisStack();
 					var lastContent = "";
+
 
 					for (var j = 0; j < line.tokens.length; j++) {
 
@@ -1476,13 +1579,15 @@ var generator = {
 					generator.headers.insert("stdio.h");
 					generator.headers.insert("stdlib.h");
 
+
                     if (newDeclaration) {
 
                         if (definitionStack.length > 0) {
 
                             variable.temporary = true;
-                            tmpVariableStack.push(new tmpVariableState(generator.refactor.variableList.length, definitionStack.length - 1));
+                            definitionStack[definitionStack.length - 1].variables.push(variable.name);
                         }
+
 						generator.refactor.insertVariable(variable);
 						contentBuffer.push(variable.type);
 						line.contentStack.push("char *" + variable.name + " = " + " ( char * ) calloc(2048, sizeof( char ))");
@@ -1493,25 +1598,25 @@ var generator = {
 
 						if (variable.ambigious) {
 
-							if (generator.refactor.variableList[variable.lineDeclared].type != variable.type) {
+							if (generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type != variable.type) {
 
 								var fcontent = "";
 								var content = "";
 								var allocContent = "";
 
-								if (generator.refactor.variableList[variable.lineDeclared].type == generator.enums.c.data.type.string) {
+								if (generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type == generator.enums.c.data.type.string) {
 
-									fcontent += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+									fcontent += generator.refactor.variableList[generator.refactor.findVariable(variable.name)].name + ".charValue";
 								}
 								else {
 
-									fcontent += generator.refactor.variableList[variable.lineDeclared].name + "." + generator.refactor.variableList[variable.lineDeclared].type + "Value";
+									fcontent += generator.refactor.variableList[generator.refactor.findVariable(variable.name)].name + "." + generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type + "Value";
 								}
 
 								if (variable.type == generator.enums.c.data.type.string) {
 
 									allocContent = "( char * ) calloc(2048, sizeof( char ) )";
-									content += generator.refactor.variableList[variable.lineDeclared].name + ".charValue";
+									content += generator.refactor.variableList[generator.refactor.findVariable(variable.name)].name + ".charValue";
 								}
 								else {
 
@@ -1524,7 +1629,7 @@ var generator = {
 							}
 						}
 
-						generator.refactor.variableList[variable.lineDeclared] = variable;
+						generator.refactor.variableList[generator.refactor.findVariable(variable.name)] = variable;
 					}
 
 					action.pushVariableState(variable);
@@ -1928,9 +2033,12 @@ var generator = {
 					 action.type == generator.enums.action.basic.id ||
 					 action.type == generator.enums.action.basic.increment ||
 					 action.type == generator.enums.action.compoundAssignment ||
-					 action.type == generator.enums.action.basic.boolean) {
+					 action.type == generator.enums.action.basic.boolean ||
+					 action.type == generator.enums.action.return.void ||
+					 action.type == generator.enums.action.return.constant ||
+					 action.type == generator.enums.action.return.string) {
 
-				var isStr = action.type == generator.enums.action.basic.stringConstant ? true : false;
+				var isStr = action.type == generator.enums.action.basic.stringConstant || action.type == generator.enums.action.return.string ? true : false;
 				var contentBuffer = [];
 				var lastContent = "";
 				var typeCasted = false;
@@ -2215,6 +2323,17 @@ var generator = {
 							else if (line.values[j] == generator.enums.symbol.true ||
 									 line.values[j] == generator.enums.symbol.false) {
 									contentBuffer.push(line.values[j].toLowerCase());
+							}
+							else if (line.values[j] == generator.enums.shared.c_python.return){
+
+								if (definitionStack.length > 0 ) {
+									hasReturnType = true;
+									contentBuffer.push(line.values[j]);
+								}
+								else {
+
+									legal = false;
+								}
 							}
 						}
 						else if (line.tokens[j] == generator.enums.token.stringConstant) {
@@ -2973,6 +3092,19 @@ var generator = {
 						result = candidate.function(paramList);
 					}
 
+					if (action.type == generator.enums.action.return.void ||
+						action.type == generator.enums.action.return.constant ||
+						action.type == generator.enums.action.return.string) {
+
+						if (definitionStack.length > 0 && definitionStack[definitionStack.length - 1].definitionType == generator.enums.defintion.function) {
+							hasReturnType = true;
+							result = "return " + result;
+						}
+						else {
+
+							legal = false;
+						}
+					}
 					line.contentStack.push(result);
 				}
 
@@ -2999,10 +3131,17 @@ var generator = {
                             funcArgs.push(line.values[j]);
                         }
                     }
+                    else if (line.tokens[j] == generator.enums.token.keyword) {
+
+						if (funcName == "") {
+                            funcName = line.values[j];
+                        }
+                    }
                 }
 
-                definitionStack.push(new tmpDefinitionState(funcName, funcArgs, new Array()));
-
+				if (funcName != "main")
+					definitionStack.push(new tmpDefinitionState(funcName, funcArgs, tabCount, new Array(), generator.enums.definition.function));
+                continue;
 			}
 			else if (action.type == generator.enums.error.parse) {
 
@@ -3010,7 +3149,95 @@ var generator = {
 				line.contentStack.push("//Invalid Syntax (" + line.values.join(" ") + ")");
 			}
 
-            buffer.push(line);
+            var pushToBuffer = true;
+
+            if (definitionStack.length > 0) {
+
+                var lastDefinition = definitionStack[definitionStack.length - 1];
+                lastDefinition.contains.push(line);
+
+                if (lastDefinition.indention == tabCountAheadByOne || i + 1 == parseData.symbol.length) {
+
+					var argumentNameList = [];
+                    var variableReferences = lastDefinition.variables;
+                    var parameterString = "";
+                    var tabSpace = "";
+                    var content = "";
+
+                    for (var j = 0; j < variableReferences.length; j++) {
+
+						var currentArgument = variableReferences[j];
+						argumentNameList.push(currentArgument);
+                    }
+
+                    for (var j = 0; j < lastDefinition.arguments.length; j++) {
+
+						var argVariable = "";
+						try {
+
+							argVariable = generator.refactor.getVariable(lastDefinition.arguments[j]);
+							parameterString += argVariable.type + " " + argVariable.name;
+							if (j + 1 != lastDefinition.arguments.length) {
+
+								parameterString += ", ";
+							}
+
+							for (var k = 0; k < lastDefinition.contains.length; k++) {
+
+								for (var l = 0; l < lastDefinition.contains[k].contentStack.length; l++) {
+
+									lastDefinition.contains[k].contentStack[l] = lastDefinition.contains[k].contentStack[l].replace(argVariable.type + " " + argVariable.name, argVariable.name);
+								}
+							}
+						}
+						catch (exception) {
+
+							// Code refactoring when a variable's type isn't defined in a parameter
+						}
+                    }
+
+					for (var j = 0; j <= lastDefinition.indention; j++) {
+
+						tabSpace += "\t";
+					}
+
+                    for (var j = 0; j < lastDefinition.contains.length; j++) {
+
+						for (var k = 0; k < lastDefinition.contains[j].contentStack.length; k++) {
+
+							content += tabSpace + lastDefinition.contains[j].contentStack[k] + ";\n";
+						}
+                    }
+
+                    /////////////////////////////////////////////////////////////////////////////////
+
+                    for (var j = 0; j < argumentNameList.length; j++) {
+
+						generator.refactor.removeVariable(argumentNameList[j]);
+                    }
+
+                    generator.functions.insert(lastDefinition.name, content, "int", parameterString);
+                    tokenizer.python.token.add.keyword(lastDefinition.name);
+                    dictionary.pages.addWord(new Word(
+						lastDefinition.name, function(value) {
+							return this.name + "(" + value.join(" ") + ")";
+					}, new Array("integer-only", lastDefinition.name, "C-language"), generator.enums.c.data.type.integer));
+                    dictionary.pages.addWord(new Word(
+						lastDefinition.name, function(value) {
+							return this.name + "(" + value.join(" ") + ")";
+					}, new Array("integer-only", lastDefinition.name, "Python-language"), generator.enums.python.data.type.integer));
+                    definitionStack.pop();
+                    generator.reparse = true;
+                }
+
+
+				pushToBuffer = false;
+            }
+
+            if (pushToBuffer) {
+
+                buffer.push(line);
+            }
 		}
 
 		for (var i = 0; i < generator.headers.list.length; i++) {
@@ -3039,6 +3266,10 @@ var generator = {
 			}
 		}
 
+		if (hasReturnType) {
+
+			generator.variables.bodyEnd = "}";
+		}
 		result = generator.variables.comment + generator.variables.headerString +
 		"\n" + generator.variables.defineString + "\n" + generator.variables.struct + generator.variables.union +
         generator.variables.functions + generator.variables.bodyBegin + bodyText +
@@ -3056,5 +3287,7 @@ var generator = {
 
 		// Work only when code is generate to C, will use double instead of float during data type.
 		useDoubleInsteadOfFloat: true,
-	}
+	},
+
+	reparse: false,
 }
