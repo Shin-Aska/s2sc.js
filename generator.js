@@ -604,9 +604,6 @@ var generator = {
 			if (index != -1) {
 				generator.refactor.variableList.splice(index, 1);
 			}
-			else {
-				alert(name);
-			}
 		},
 
 		clear: function () {
@@ -1107,9 +1104,6 @@ var generator = {
 
 					generator.headers.insert("stdbool.h");
 				}
-
-				if (generator.reparse)
-					alert(newDeclaration + " " + line.values);
 
                 if (!isStr && legal) {
 
@@ -2081,14 +2075,20 @@ var generator = {
 							else {
 
 								if (!typeCasted) {
-									isStr = true;
-									variable.type = generator.enums.c.data.type.string;
+
+									if (tmpVariable.temporary) {
+
+										tmpVariable.type = generator.enums.c.data.type.integer;
+									}
+									else {
+										isStr = true;
+										tmpVariable.type = generator.enums.c.data.type.string;
+									}
 								}
 
 							}
 						}
 						catch (exception) {
-
 							legal = false;
 						}
 					}
@@ -2272,33 +2272,14 @@ var generator = {
 							}
 
 							if (identifier != null) {
-								if (identifier.lineDeclared != i && j != 0) {
 
-
-									if (identifier.type != variable.type && stack.count == 0) {
-
-										if (variable.type == generator.enums.c.data.type.integer ||
-											variable.type == generator.enums.c.data.type.float) {
-											contentBuffer.push("(" + variable.type + ")");
-										}
-										else if (identifier.type == generator.enums.c.data.type.string) {
-
-											if (variable.type == generator.enums.c.data.type.integer) {
-												generator.includer.function.parser.integer.string();
-											}
-											else if (variable.type == generator.enums.c.data.type.float) {
-												generator.includer.function.parser.float.string();
-											}
-										}
-									}
-								}
 
 								if (identifier.ambigious) {
 									if (identifier.type == generator.enums.c.data.type.string) {
 										contentBuffer.push(identifier.name + ".charValue");
 									}
 									else {
-										contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "Value)");
+										contentBuffer.push("(*" + identifier.name+ "." + identifier.type + "ValueA)");
 									}
 
 								}
@@ -3087,9 +3068,16 @@ var generator = {
 					}
 					else {
 
-						list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
-						candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
-						result = candidate.function(paramList);
+						if (action.type == generator.enums.action.basic.id) {
+
+							result = contentBuffer;
+						}
+						else {
+
+							list = dictionary.pages.findWordsByKeywords(["string-only", "concatenation", "C-language"]);
+							candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.string, 3);
+							result = candidate.function(paramList);
+						}
 					}
 
 					if (action.type == generator.enums.action.return.void ||
@@ -3129,6 +3117,13 @@ var generator = {
                         }
                         else {
                             funcArgs.push(line.values[j]);
+                            try {
+
+								generator.refactor.insertVariable(new Variable(line.values[j], 0, 0, false, true));
+                            }
+                            catch (exception) {
+
+                            }
                         }
                     }
                     else if (line.tokens[j] == generator.enums.token.keyword) {
@@ -3182,13 +3177,13 @@ var generator = {
 								parameterString += ", ";
 							}
 
-							for (var k = 0; k < lastDefinition.contains.length; k++) {
+							/*for (var k = 0; k < lastDefinition.contains.length; k++) {
 
 								for (var l = 0; l < lastDefinition.contains[k].contentStack.length; l++) {
 
 									lastDefinition.contains[k].contentStack[l] = lastDefinition.contains[k].contentStack[l].replace(argVariable.type + " " + argVariable.name, argVariable.name);
 								}
-							}
+							}*/
 						}
 						catch (exception) {
 
@@ -3270,6 +3265,7 @@ var generator = {
 
 			generator.variables.bodyEnd = "}";
 		}
+
 		result = generator.variables.comment + generator.variables.headerString +
 		"\n" + generator.variables.defineString + "\n" + generator.variables.struct + generator.variables.union +
         generator.variables.functions + generator.variables.bodyBegin + bodyText +

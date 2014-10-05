@@ -59,18 +59,19 @@ var parser = {
 
 		//Function Parameters
 		"id <- undefined",
-		"undefined <- kwd ( sConst ) | kwd result | kwd ( paramList ) | kwd ( )",
-		"paramList <- result , result | id , id | sConst , sConst",
-		"paramList <- result , id | id , result | id , sConst",
-		"paramList <- sConst , result | sConst , id | result , sConst",
-		"paramList <- const , id | id , const | sConst , const",
-		"paramList <- const , result | result , const | const, sConst | const , const",
-		"paramList <- paramList , id | paramList , sConst | paramLi st , result | paramList , const",
+		"undefined <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( )",
+		"paramList <- result , result F | id , id  F | sConst , sConst F",
+		"paramList <- result , id  F | id , result  F | id , sConst F",
+		"paramList <- sConst , result  F | sConst , id  F | result , sConst F",
+		"paramList <- const , id  F | id , const  F | sConst , const F",
+		"paramList <- const , result  F | result , const  F | const, sConst  F | const , const F",
+		"paramList <- paramList , id  F | paramList , sConst  F | paramList , result  F | paramList , const F",
 
 		// Return Types
+
+		"returnConst <- return const F | return result F",
+		"returnString <- return sConst F",
 		"returnUndefined <- return F | return id F",
-		"returnConst <- return const | return result",
-		"returnString <- return sConst",
 
 		// Boolean keywords
 		"boolStmt <- True",

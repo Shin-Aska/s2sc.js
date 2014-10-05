@@ -98,7 +98,7 @@ $( document ).ready(function() {
 			}
 			catch (exception) {
 
-				$("#console").contents().find('html').html(exception);
+				$("#console").contents().find('html').html(exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber);
 				document.getElementById('output').value = "";
 				editAreaLoader.setValue("output", "");
 			}
