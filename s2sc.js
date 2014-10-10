@@ -33,6 +33,7 @@ var s2sc =  {
 		do {
 
 			s2sc.clear();
+			tokenizer.reset();
 			dictionary.pages.clear();
 
 			if (generator.options.useDoubleInsteadOfFloat) {
@@ -54,6 +55,7 @@ var s2sc =  {
 
 				var result = "";
 				if (s2sc.map[i].length != 0) {
+
 					result = parser.parse(s2sc.map[i]);
 				}
 				else {

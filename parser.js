@@ -378,7 +378,7 @@ var parser = {
 
         } while (stack.length != 0 || actionBuffer);
 
-		if (buffer.length == 1) {
+		if (buffer.length <= 1) {
 			result.valid = true;
 			result.symbol = buffer[0];
 		}

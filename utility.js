@@ -8,7 +8,12 @@ var clone = {
 	variable: function(vari) {
 
 		return new Variable(vari.name, vari.type, vari.lineDeclared, vari.ambigious, vari.temporary);
-	}
+	},
+
+	line: function(cLine) {
+
+		return new Line(cLine.lineNumber, cLine.tokens, cLine.values, cLine.id);
+	},
 }
 
 var getAllProperty = function(object, type) {

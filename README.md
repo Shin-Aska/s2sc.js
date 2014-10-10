@@ -9,11 +9,18 @@ Programming Language Converter for Javascript
 that aims to connect other programming languages to web browsers by interpreting
 codes from a programming language then converting it to another programming language.
 
+At this moment, s2sc supports the following code conversions:
+	Python -> C (Progress)
+
 How to use
 ===========
 
-In your javascript console, by calling out s2sc.convert() will instruct s2sc to
-generate an equivalent C code from the existing python code statement.
+By calling out s2sc.convert() will instruct s2sc to generate an equivalent code from
+another language base on the source language that was given to it. The *convert function*
+has 3 parameters, the first one specifies the *source language*, while the second specifies
+the *target language* and the third parameter is the string of the source code. It can be called
+directly and be used by other functions since the result of the *convert function* is just a string
+that can be manipulated directly by other applications.
 
 ```javascript
 s2sc.convert(s2sc.language.python2, s2sc.language.c, "a = 5 ** 23 + 5 ** 2 + pow(3+3434, 4)")
@@ -32,6 +39,18 @@ int main (void) {
 	double a = pow(5 , 23) + pow(5 , 2) + pow(3 + 3434 , 4);
 	return 0;
 }
+```
+
+Examples
+===========
+```Python
+
+def add(a, b):
+	return a + b
+
+def main():
+	c = add(445, 444)
+	a = pow(2, c)
 ```
 
 Documentation

@@ -98,7 +98,13 @@ $( document ).ready(function() {
 			}
 			catch (exception) {
 
-				$("#console").contents().find('html').html(exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber);
+				if (typeof(exception.fileName) !== "undefined") {
+					$("#console").contents().find('html').html(exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber);
+				}
+				else {
+					$("#console").contents().find('html').html(exception + " [File and Line stack trace only available on Firefox]");
+				}
+
 				document.getElementById('output').value = "";
 				editAreaLoader.setValue("output", "");
 			}
