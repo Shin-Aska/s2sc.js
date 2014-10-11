@@ -71,7 +71,7 @@ var parser = {
 
 		"returnConst <- return const F | return result F",
 		"returnString <- return sConst F",
-		"returnUndefined <- return F | return id F",
+		"returnUndefined <- return id F | return F",
 
 		// Boolean keywords
 		"boolStmt <- True",

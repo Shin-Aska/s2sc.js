@@ -195,7 +195,17 @@ var generator = {
 			symbol: {
 
 				string: "char *"
-			}
+			},
+
+			action: {
+
+				return: {
+
+					undefined: "returnUndefined",
+					string: "returnString",
+					constant: "returnConst",
+				},
+			},
 		},
 
 		error: {
@@ -1812,7 +1822,7 @@ var generator = {
 						}
 						else {
 
-							if (action.type == generator.enums.action.basic.id) {
+							if (action.type == generator.enums.action.basic.id || action.type == generator.enums.c.action.return.undefined) {
 
 								result = contentBuffer;
 							}
@@ -3245,6 +3255,7 @@ var generator = {
 
 					var argumentNameList = [];
                     var variableReferences = lastDefinition.variables;
+                    var returnType = "void";
                     var parameterString = "";
                     var tabSpace = "";
                     var content = "";
@@ -3255,13 +3266,15 @@ var generator = {
 						argumentNameList.push(currentArgument);
                     }
 
-					console.log(generator.refactor.variableList);
 					for (var j = 0; j < lastDefinition.arguments.length; j++) {
 
 						var argVariable = "";
 						try {
 
 							argVariable = generator.refactor.getVariable(lastDefinition.arguments[j]);
+							if (argVariable.type == 0) {
+								argVariable.type = generator.enums.c.data.type.integer;
+							}
 							var type = argVariable.type == "string" ? "char *" : argVariable.type;
 							parameterString += type + " " + argVariable.name;
 							if (j + 1 != lastDefinition.arguments.length) {
@@ -3285,8 +3298,21 @@ var generator = {
 
 						for (var k = 0; k < lastDefinition.contains[j].contentStack.length; k++) {
 
+							var symbol = "";
+                            for (var l = 0; l < lastDefinition.contains[j].actionStack.length; l++) {
+								symbol = lastDefinition.contains[j].actionStack[l].type;
+                            }
+
+							if (symbol == generator.enums.c.action.return.undefined || symbol == generator.enums.c.action.return.constant) {
+								returnType = isEquation(lastDefinition.contains[j].contentStack[k].replace("return ", ""));
+							}
+
 							content += tabSpace + lastDefinition.contains[j].contentStack[k] + ";\n";
 						}
+                    }
+
+                    if (returnType == generator.enums.c.data.type.string) {
+						returnType = generator.enums.c.symbol.string;
                     }
 
                     /////////////////////////////////////////////////////////////////////////////////
@@ -3296,7 +3322,7 @@ var generator = {
 						generator.refactor.removeVariable(argumentNameList[j]);
                     }
 
-                    generator.functions.insert(lastDefinition.name, content, "int", parameterString);
+                    generator.functions.insert(lastDefinition.name, content, returnType, parameterString);
                     tokenizer.python.token.add.keyword(lastDefinition.name);
                     dictionary.pages.addWord(new Word(
 						lastDefinition.name, function(value) {
