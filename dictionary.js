@@ -139,9 +139,13 @@ var dictionary = {
 				keywordList.push(keyword);
 			}
 
+			//dictionary.search.equivalentWord("C-language", dictionary.pages.findWord("add", "Python-language"))
+
+			keywordList.pop();
 			var candidateWordIndex = -1;
 			var candidateTagMatches = 0;
 			var tmpTagMatches = 0;
+			console.log(keywordList);
 
 			for (var i = 0; i < list.length; i++) {
 
@@ -168,11 +172,17 @@ var dictionary = {
 				}
 			}
 
-			if (candidateWordIndex != -1) {
+			if (candidateWordIndex != -1 && candidateTagMatches == dictionary.pages.word[candidateWordIndex].tags.length - 1) {
 				return dictionary.pages.word[candidateWordIndex];
 			}
 
-			throw "No equivalent found exception";
+			throw dictionary.search.exception.NoEquivalent;
+		},
+
+		exception: {
+
+			NoEquivalent: "No equivalent found exception",
+
 		}
 	},
 
@@ -214,7 +224,7 @@ var dictionary = {
 				return dictionary.pages.word[index];
 			}
 
-			throw "Cannot find any information about \"" + name + "\" in the dictionary.<br>";
+			throw "Cannot find any information about \"" + name + "\" in the dictionary.";
 		},
 
 		// Returns a list of words that matches at least one keyword given into it.
@@ -439,50 +449,58 @@ var dictionary = {
 					var stringFormat = "";
 					var paramFormat = "";
 					for (var i = 0; i < parameter.length; i++) {
-						if (typeof(parameter[i]) == "object") {
 
-							try {
-								var link = generator.refactor.getVariable(parameter[i].name);
+						if (parameter[i].search("intValue") != -1) {
+							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
+						}
+						else if (parameter[i].search("intValue") != -1) {
+							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+						}
+						else if (parameter[i].search("charValue") != -1) {
+							parameter[i] = parameter[i].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+						}
+
+						try {
+							var link = generator.refactor.getVariable(parameter[i]);
+
+							if (link.ambigious) {
 
 								if (link.type == "int") {
 									stringFormat += "%d";
-									paramFormat += parameter[i].name;
+									paramFormat += "*" + link.name + ".intValue";
 								}
 								else if (link.type == "float") {
 									stringFormat += "%f";
-									paramFormat += parameter[i].name;
+									paramFormat += "*" + link.name + ".floatValue";
 								}
 								else if (link.type == "string") {
 									stringFormat += "%s";
-									paramFormat += parameter[i].name;
-								}
-								else if (link.type == "ambigious") {
-
-									if (link.lastDataType == "int") {
-										stringFormat += "%d";
-										paramFormat += "*" + parameter[i].name + ".intValue";
-									}
-									else if (link.lastDataType == "float") {
-										stringFormat += "%f";
-										paramFormat += "*" + parameter[i].name + ".floatValue";
-									}
-									else if (link.lastDataType == "string") {
-										stringFormat += "%s";
-										paramFormat += parameter[i].name + ".charValue";
-									}
+									paramFormat += link.name + ".charValue";
 								}
 							}
-							catch (ex) {
+							else {
 
-								paramFormat += parameter[i].name;
-								stringFormat += "%s";
+								if (link.type == "int") {
+									stringFormat += "%d";
+									paramFormat += link.name;
+								}
+								else if (link.type == "float") {
+									stringFormat += "%f";
+									paramFormat += link.name;
+								}
+								else if (link.type == "string") {
+									stringFormat += "%s";
+									paramFormat += link.name;
+								}
 							}
 						}
-						else {
-							alert(parameter[i]);
+						catch (ex) {
+
 							if (parameter[i] == generator.enums.symbol.true || parameter[i] == generator.enums.symbol.false) {
 
 								paramFormat += "\"" + parameter[i] + "\"";
+								stringFormat += "%s";
+								continue;
 							}
 							else {
 
@@ -497,20 +515,26 @@ var dictionary = {
 									stringFormat += "%f";
 								}
 							}
-							catch (ex) {
+							catch (ex1) {
 
-								var dataType = isEquation(parameter[i]);
-								if (dataType == "string") {
+								try {
+									var result = isEquation(parameter[i]);
+									if (result == generator.enums.c.data.type.integer) {
+										stringFormat += "%d";
+									}
+									else if (result == generator.enums.c.data.type.float) {
+										stringFormat += "%f";
+									}
+									else {
+										stringFormat += "%s";
+									}
+								}
+								catch (ex2) {
+
 									stringFormat += "%s";
 								}
-								else if (dataType == "float") {
-									stringFormat += "%f";
-								}
-								else  {
-									stringFormat += "%d";
-								}
-
 							}
+
 						}
 
 						if (i + 1 < parameter.length)
@@ -519,7 +543,7 @@ var dictionary = {
 
 					return "printf(\"" + stringFormat + "\", " + paramFormat + ")";
 				}
-			,new Array("output", "manipulation", "C-language"), generator.enums.c.data.type.void));
+			,new Array("console", "output", "C-language"), generator.enums.c.data.type.void));
 
 			dictionary.pages.addWord(new Word(
 				"pow", function(parameter) {
@@ -528,13 +552,6 @@ var dictionary = {
 					return this.name + "(" + parameter.join(" ") + ")";
 				}
 			, new Array("math-operation", "exponent", "C-language"), generator.enums.c.data.type.float));
-
-			dictionary.pages.addWord(new Word(
-				"testFunc11", function(value) {
-
-					return this.name + "(" + value.join(" ") + ")";
-				}
-			, new Array("magic", "doh", "C-language"), generator.enums.c.data.type.integer));
 			//
 		}
 	},
@@ -578,10 +595,10 @@ var dictionary = {
 			, new Array("math-operation", "exponent", "Python-language"), generator.enums.python.data.type.float));
 
 			dictionary.pages.addWord(new Word(
-				"testFunc", function(value) {
+				"print", function(value) {
 					return "!!";
 				}
-			, new Array("magic", "doh", "Python-language"), generator.enums.python.data.type.integer));
+			, new Array("console", "output", "Python-language"), generator.enums.python.data.type.integer));
 		}
 	}
 }
