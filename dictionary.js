@@ -345,6 +345,8 @@ var dictionary = {
 
 			dictionary.pages.addWord(new Word(
 				"sprintf", function(buffer, parameter) {
+
+					generator.headers.insert("stdio.h");
 					var stringFormat = "";
 					var paramFormat = "";
 					for (var i = 0; i < parameter.length; i++) {
@@ -372,6 +374,10 @@ var dictionary = {
 									stringFormat += "%f";
 									paramFormat += "*" + link.name + ".floatValue";
 								}
+								else if (link.type == "double") {
+									stringFormat += "%ld";
+									paramFormat += "*" + link.name + ".doubleValue";
+								}
 								else if (link.type == "string") {
 									stringFormat += "%s";
 									paramFormat += link.name + ".charValue";
@@ -385,6 +391,10 @@ var dictionary = {
 								}
 								else if (link.type == "float") {
 									stringFormat += "%f";
+									paramFormat += link.name;
+								}
+								else if (link.type == "double") {
+									stringFormat += "%ld";
 									paramFormat += link.name;
 								}
 								else if (link.type == "string") {
@@ -446,6 +456,8 @@ var dictionary = {
 
 			dictionary.pages.addWord(new Word(
 				"printf", function(parameter) {
+
+					generator.headers.insert("stdio.h");
 					var stringFormat = "";
 					var paramFormat = "";
 					for (var i = 0; i < parameter.length; i++) {
@@ -473,6 +485,10 @@ var dictionary = {
 									stringFormat += "%f";
 									paramFormat += "*" + link.name + ".floatValue";
 								}
+								else if (link.type == "double") {
+									stringFormat += "%ld";
+									paramFormat += "*" + link.name + ".doubleValue";
+								}
 								else if (link.type == "string") {
 									stringFormat += "%s";
 									paramFormat += link.name + ".charValue";
@@ -486,6 +502,10 @@ var dictionary = {
 								}
 								else if (link.type == "float") {
 									stringFormat += "%f";
+									paramFormat += link.name;
+								}
+								else if (link.type == "double") {
+									stringFormat += "%ld";
 									paramFormat += link.name;
 								}
 								else if (link.type == "string") {

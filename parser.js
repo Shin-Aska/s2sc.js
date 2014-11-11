@@ -103,6 +103,8 @@ var parser = {
 		"boolStmt <- boolStmt + boolStmt | boolStmt - boolStmt | boolStmt * boolStmt",
 		"boolStmt <- boolStmt / boolStmt | boolStmt % boolStmt | boolStmt ** boolStmt",
 		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt | not boolStmt F",
+		"boolStmt <- boolStmt and id | boolStmt or id | id and boolStmt | id or boolStmt",
+		"boolStmt <- not id F",
 
 		// Arithmetic cases
 		"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",

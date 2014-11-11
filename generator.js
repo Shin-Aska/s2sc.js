@@ -195,7 +195,12 @@ var generator = {
 
 			symbol: {
 
-				string: "char *"
+				string: "char *",
+				true: "true",
+				false: "false",
+				not: "!",
+				or: "||",
+				and: "&&"
 			},
 
 			action: {
@@ -233,7 +238,12 @@ var generator = {
 
 				string: "str",
 				exponent: "**",
-				floorDivision: "//"
+				floorDivision: "//",
+				true: "True",
+				false: "False",
+				not: "not",
+				and: "and",
+				or: "or"
 			}
 		},
 
@@ -262,6 +272,7 @@ var generator = {
             stringDeclaration: "strDecl",
             compoundAssignment: "cmpAsgn",
             booleanDeclaration: "boolDecl",
+            conditionStatement: "condStmt",
         },
 
         shared: {
@@ -895,8 +906,11 @@ var generator = {
 									resultingDataType = generator.enums.c.data.type.string;
 								}
 							}
-							else if (line.values[j] == generator.enums.symbol.true ||
-									 line.values[j] == generator.enums.symbol.false) {
+							else if (line.values[j] == generator.enums.python.symbol.true ||
+									 line.values[j] == generator.enums.python.symbol.false||
+									 line.values[j] == generator.enums.python.symbol.not ||
+									 line.values[j] == generator.enums.python.symbol.and ||
+									 line.values[j] == generator.enums.python.symbol.or) {
 
 								if (!typeCasted) {
 									resultingDataType = generator.enums.c.data.type.bool;
@@ -944,6 +958,16 @@ var generator = {
 
 								if (checkStack.set == 0 && checkStack.count > 0) {
 									checkStack.count--;
+								}
+							}
+							else if (
+								line.values[j] == generator.enums.symbol.subtract ||
+								line.values[j] == generator.enums.symbol.multiply ||
+								line.values[j] == generator.enums.symbol.divide
+							) {
+
+								if (isStr && !typeCasted) {
+									legal = false;
 								}
 							}
 							else if (line.values[j] == generator.enums.symbol.comma && !parameterSeparated) {
@@ -1095,9 +1119,20 @@ var generator = {
 										}
 									}
 								}
-								else if (line.values[j] == generator.enums.symbol.true ||
-										 line.values[j] == generator.enums.symbol.false) {
-										contentBuffer.push(line.values[j].toLowerCase());
+								else if (line.values[j] == generator.enums.python.symbol.true) {
+                                    contentBuffer.push(generator.enums.c.symbol.true);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.false) {
+                                    contentBuffer.push(generator.enums.c.symbol.false);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.not) {
+                                    contentBuffer.push(generator.enums.c.symbol.not);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.and) {
+                                    contentBuffer.push(generator.enums.c.symbol.and);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.or) {
+                                    contentBuffer.push(generator.enums.c.symbol.or);
 								}
 								else if (line.values[j] == generator.enums.shared.c_python.return){
 
@@ -1528,9 +1563,20 @@ var generator = {
 										}
 									}
 								}
-								else if (line.values[j] == generator.enums.symbol.true ||
-										 line.values[j] == generator.enums.symbol.false) {
-										contentBuffer.push(line.values[j]);
+								else if (line.values[j] == generator.enums.python.symbol.true) {
+                                    contentBuffer.push(generator.enums.c.symbol.true);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.false) {
+                                    contentBuffer.push(generator.enums.c.symbol.false);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.not) {
+                                    contentBuffer.push(generator.enums.c.symbol.not);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.and) {
+                                    contentBuffer.push(generator.enums.c.symbol.and);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.or) {
+                                    contentBuffer.push(generator.enums.c.symbol.or);
 								}
 							}
 							else if (line.tokens[j] == generator.enums.token.stringConstant) {
@@ -2070,7 +2116,7 @@ var generator = {
 
 
 							if (variable.type == 0 ||
-							   (variable.type != generator.enums.c.data.type.float)) {
+							   (variable.type != generator.enums.c.data.type.float && variable.type != generator.enums.c.data.type.bool)) {
 								try {
 
 									variable.type = isInteger(line.values[j]) ?
@@ -2122,8 +2168,11 @@ var generator = {
 
 								typeCasted = true;
 							}
-							else if (line.values[j] == generator.enums.symbol.true ||
-									 line.values[j] == generator.enums.symbol.false) {
+							else if (line.values[j] == generator.enums.python.symbol.true ||
+									 line.values[j] == generator.enums.python.symbol.false||
+									 line.values[j] == generator.enums.python.symbol.not ||
+									 line.values[j] == generator.enums.python.symbol.and ||
+									 line.values[j] == generator.enums.python.symbol.or) {
 
 								generator.headers.insert("stdbool.h");
 								if (variable.type == 0) {
@@ -2438,9 +2487,20 @@ var generator = {
 										}
 									}
 								}
-								else if (line.values[j] == generator.enums.symbol.true ||
-										 line.values[j] == generator.enums.symbol.false) {
-										contentBuffer.push(line.values[j].toLowerCase());
+								else if (line.values[j] == generator.enums.python.symbol.true) {
+                                    contentBuffer.push(generator.enums.c.symbol.true);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.false) {
+                                    contentBuffer.push(generator.enums.c.symbol.false);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.not) {
+                                    contentBuffer.push(generator.enums.c.symbol.not);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.and) {
+                                    contentBuffer.push(generator.enums.c.symbol.and);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.or) {
+                                    contentBuffer.push(generator.enums.c.symbol.or);
 								}
 
 							}
@@ -2895,7 +2955,6 @@ var generator = {
 						var stack = new ParenthesisStack();
 						contentBuffer = [];
 						var lastContent = "";
-
 						for (var j = 0; j < line.tokens.length; j++) {
 
 							lastContent = contentBuffer.slice();
@@ -3006,10 +3065,22 @@ var generator = {
 										}
 									}
 								}
-								else if (line.values[j] == generator.enums.symbol.true ||
-										 line.values[j] == generator.enums.symbol.false) {
-										contentBuffer.push(line.values[j]);
+								else if (line.values[j] == generator.enums.python.symbol.true) {
+                                    contentBuffer.push(generator.enums.c.symbol.true);
 								}
+								else if (line.values[j] == generator.enums.python.symbol.false) {
+                                    contentBuffer.push(generator.enums.c.symbol.false);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.not) {
+                                    contentBuffer.push(generator.enums.c.symbol.not);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.and) {
+                                    contentBuffer.push(generator.enums.c.symbol.and);
+								}
+								else if (line.values[j] == generator.enums.python.symbol.or) {
+                                    contentBuffer.push(generator.enums.c.symbol.or);
+								}
+
 							}
 							else if (line.tokens[j] == generator.enums.token.stringConstant) {
 
@@ -3408,7 +3479,45 @@ var generator = {
 						tabSpace += "\t";
 					}
 
+					var argumentList = [];
+					for (var i = 0; i < func.arguments.length; i++) {
+
+						var variable = "";
+						try {
+							variable = generator.refactor.getVariable(func.arguments[i]);
+						}
+						catch (searchException) {
+
+							// If ever the searchException is thrown, it means that
+							// that line inside the function is using a parameter variable
+							// it will then search on the refactor list then fetches it back to
+							// the argument list.
+
+							argumentList = generator.refactor.variableList.slice();
+							generator.refactor.variableList = tmpRefactorVariables.slice();
+							variable = generator.refactor.getVariable(func.arguments[i]);
+							argumentList.push(variable);
+							generator.refactor.variableList = argumentList.slice();
+						}
+
+						var type = variable.type;
+
+						if (type == generator.enums.c.data.type.string) {
+							type = generator.enums.c.symbol.string;
+						}
+
+						parameterString += type + " " + variable.name;
+						if (i + 1 != func.arguments.length) {
+
+							parameterString += ", ";
+						}
+					}
+
 					for (var i = 0; i < func.contains.length; i++) {
+
+						if (func.contains[i].actionStack.length < 1) {
+							continue;
+						}
 
                         var action = func.contains[i].actionStack[0];
                         if (action.type == generator.enums.action.declaration ||
@@ -3447,17 +3556,6 @@ var generator = {
 							}
 
 							content += tabSpace + fcontent[i].contentStack[j] + ";\n";
-						}
-					}
-
-					for (var i = 0; i < func.arguments.length; i++) {
-
-						var variable = generator.refactor.getVariable(func.arguments[i]);
-
-						parameterString += variable.type + " " + variable.name;
-						if (i + 1 != func.arguments.length) {
-
-							parameterString += ", ";
 						}
 					}
 
@@ -3678,6 +3776,8 @@ var generator = {
                 action.type == generator.enums.action.stringDeclaration ||
                 action.type == generator.enums.action.booleanDeclaration) {
 
+				// If the line is defined as a header of a function, it will not be processed but will be recorded on
+				// the definition stack
 				if (definitionStack.length > 0 && definitionStack[definitionStack.length - 1].definitionType == generator.enums.definition.function) {
 
 					line.actionStack.push(action);
@@ -3746,6 +3846,10 @@ var generator = {
 				}
                 continue;
 			}
+			else if (action.type == generator.enums.action.conditionStatement) {
+
+				alert(line.values.join(" "));
+			}
 			else if (action.type == generator.enums.error.parse) {
 
 				line.contentStack = [];
@@ -3754,14 +3858,14 @@ var generator = {
 
             var pushToBuffer = true;
 
+			// This line here tells whether or not a line of code is inside a function
+			// or not.
             if (definitionStack.length > 0) {
 
                 var lastDefinition = definitionStack[definitionStack.length - 1];
                 lastDefinition.contains.push(line);
 
                 if (lastDefinition.indention == tabCountAheadByOne || i + 1 == parseData.symbol.length) {
-
-
 
                     //generator.functions.insert(lastDefinition.name, content, returnType, parameterString);
                     tokenizer.python.token.add.keyword(lastDefinition.name);
