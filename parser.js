@@ -56,6 +56,7 @@ var parser = {
 
 		//Conditional Statement
 		"condStmt <- if boolStmt : | elif boolStmt : | else :",
+		"condStmt <- if result : | elif result :",
 
 		//Function Parameters
 		"id <- undefined",
