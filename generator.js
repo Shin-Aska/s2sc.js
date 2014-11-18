@@ -275,6 +275,7 @@ var generator = {
             compoundAssignment: "cmpAsgn",
             booleanDeclaration: "boolDecl",
             conditionStatement: "condStmt",
+            conditionStatementClosure: "condStmtClosure",
         },
 
         shared: {
@@ -3402,6 +3403,64 @@ var generator = {
 					return line;
 				},
 
+				processConditionStatement: function (line, action, legal, definitionStack, currentLanguage, targetLanguage) {
+
+					var contained = false;
+					var index = 0;
+					var type  = 1;
+
+					line = clone.line(line);
+					line.tokens.splice(line.tokens.length - 1, 1);
+					line.values.splice(line.values.length - 1, 1);
+
+					for (var i = 0; i < line.values.length; i++) {
+
+						if (line.values[i] == "if") {
+							index = i + 1;
+							type = 1;
+						}
+						else if (line.values[i] == "elif") {
+							index = i + 1;
+							type = 2;
+						}
+						else if (line.values[i] == "else") {
+							index = i + 1;
+							type = 3;
+						}
+					}
+					//alert(line.values + " " + type);
+
+					if (line.tokens[index] == generator.enums.token.symbol && line.values[index] == generator.enums.symbol.leftParenthesis) {
+
+						if (line.values[index] == generator.enums.symbol.leftParenthesis && line.values[line.values.length - 1] == generator.enums.symbol.rightParenthesis) {
+
+							contained = true;
+						}
+					}
+
+					if (type == 3) {
+						contained = true;
+					}
+					line = generator.c.to.python.processBasicStatement(line, action, legal, definitionStack, currentLanguage, targetLanguage);
+
+					if (contained == false) {
+
+						line.contentStack[0] = generator.enums.symbol.leftParenthesis + " " + line.contentStack[0] + " " + generator.enums.symbol.rightParenthesis;
+					}
+
+					if (type == 1) {
+						line.contentStack[0] = "if " + line.contentStack[0];
+					}
+					else if (type == 2) {
+						line.contentStack[0] = "else if " + line.contentStack[0];
+					}
+					else if (type == 3) {
+						line.contentStack[0] = "else" + line.contentStack[0];
+					}
+
+					return line;
+				},
+
 				processUserDefinedFunction: function (func, valueParameters) {
 
 
@@ -3484,6 +3543,10 @@ var generator = {
 					}
 
 					var argumentList = [];
+
+					var tabCountList = [];
+					var tabExtraSpace= "";
+
 					for (var i = 0; i < func.arguments.length; i++) {
 
 						var variable = "";
@@ -3524,24 +3587,32 @@ var generator = {
 						}
 
                         var action = func.contains[i].actionStack[0];
-                        if (action.type == generator.enums.action.declaration ||
+                        if (action.type == generator.enums.action.declaration       ||
 							action.type == generator.enums.action.stringDeclaration ||
 							action.type == generator.enums.action.booleanDeclaration) {
 
 							fcontent.push(generator.c.to.python.processDeclarativeStatement(new Array(), func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language"));
 						}
-						else if (action.type == generator.enums.action.basic.constant ||
-								 action.type == generator.enums.action.basic.stringConstant ||
-								 action.type == generator.enums.action.basic.result ||
-								 action.type == generator.enums.action.basic.id ||
-								 action.type == generator.enums.action.basic.increment ||
-								 action.type == generator.enums.action.compoundAssignment ||
-								 action.type == generator.enums.action.basic.boolean ||
-								 action.type == generator.enums.action.return.void ||
-								 action.type == generator.enums.action.return.constant ||
-								 action.type == generator.enums.action.return.string) {
+						else if (action.type == generator.enums.action.basic.constant  ||
+							action.type == generator.enums.action.basic.stringConstant ||
+							action.type == generator.enums.action.basic.result         ||
+							action.type == generator.enums.action.basic.id             ||
+							action.type == generator.enums.action.basic.increment      ||
+							action.type == generator.enums.action.compoundAssignment   ||
+							action.type == generator.enums.action.basic.boolean        ||
+							action.type == generator.enums.action.return.void          ||
+							action.type == generator.enums.action.return.constant      ||
+							action.type == generator.enums.action.return.string) {
 
-								fcontent.push(generator.c.to.python.processBasicStatement(func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language"));
+							fcontent.push(generator.c.to.python.processBasicStatement(func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language"));
+						}
+						else if (action.type == generator.enums.action.conditionStatement) {
+
+							fcontent.push(func.contains[i]);
+						}
+						else if (action.type == generator.enums.action.conditionStatementClosure) {
+
+							fcontent.push(func.contains[i]);
 						}
 					}
 
@@ -3551,6 +3622,8 @@ var generator = {
 						for (var j = 0; j < fcontent[i].contentStack.length; j++) {
 
 							var symbol = "";
+							var insert = true;
+
 							for (var k = 0; k < fcontent[i].actionStack.length; k++) {
                                 symbol = fcontent[i].actionStack[k].type;
 							}
@@ -3559,7 +3632,53 @@ var generator = {
 								returnType = isEquation(fcontent[i].contentStack[j].replace("return ", ""));
 							}
 
-							content += tabSpace + fcontent[i].contentStack[j] + ";\n";
+							if (fcontent[i].clauseStatement) {
+
+								var tabCounter = 0;
+								content += tabSpace + fcontent[i].contentStack[j] + "\n";
+
+								for (var k = 0; k < fcontent[i].contentStack[j].length; k++) {
+
+									if (fcontent[i].contentStack[j][k] == '\t') {
+										tabCounter = tabCounter + 1;
+									}
+								}
+
+								if (tabCountList.length > 0) {
+
+									if (tabCountList[tabCountList.length - 1] == tabCounter) {
+										insert = false;
+										tabCountList.pop();
+										tabExtraSpace = "";
+									}
+								}
+
+
+								if (insert) {
+									tabCountList.push(tabCounter);
+									for (var k = 0; k < tabCounter; k++) {
+										tabExtraSpace += "\t";
+									}
+								}
+							}
+							else {
+
+								if (tabExtraSpace != "") {
+									originalTabExtaSpace = tabExtraSpace;
+									tabExtraSpace = "";
+									for (var k = 0; k < tabCounter; k++) {
+										tabExtraSpace += "\t";
+									}
+									content += tabSpace + tabExtraSpace + "\t" + fcontent[i].contentStack[j] + ";\n";
+									tabExtraSpace = originalTabExtaSpace;
+								}
+								else {
+
+									content += tabSpace + tabExtraSpace + fcontent[i].contentStack[j] + ";\n";
+								}
+
+							}
+
 						}
 					}
 
@@ -3852,36 +3971,8 @@ var generator = {
 			}
 			else if (action.type == generator.enums.action.conditionStatement) {
 
-				var contained = false;
-
-				var originalTokens = line.tokens.slice();
-				var originalValues = line.values.slice();
-
-				line.tokens.splice(0, 1);
-				line.values.splice(0, 1);
-				line.tokens.splice(line.tokens.length - 1, 1);
-				line.values.splice(line.values.length - 1, 1);
-
-				if (line.tokens[0] == generator.enums.token.symbol && line.values[0] == generator.enums.symbol.leftParenthesis) {
-
-					if (line.values[0] == generator.enums.symbol.leftParenthesis && line.values[line.values.length - 1] == generator.enums.symbol.rightParenthesis) {
-
-						contained = true;
-					}
-				}
-
-				line = generator.c.to.python.processBasicStatement(line, action, legal, definitionStack, currentLanguage, targetLanguage);
-
-				if (contained == false) {
-
-					line.contentStack[0] = generator.enums.symbol.leftParenthesis + " " + line.contentStack[0] + " " + generator.enums.symbol.rightParenthesis;
-				}
-
-				line.contentStack[0] = "if " + line.contentStack[0];
-
-				line.tokens = originalTokens.slice();
-				line.values = originalValues.slice();
-
+				line = generator.c.to.python.processConditionStatement(line, action, legal, definitionStack, currentLanguage, targetLanguage);
+				//alert(tabCount + "=>" + line.contentStack[0]);
 				definitionStack.push(new tmpDefinitionState("", new Array(), tabCount, new Array(), generator.enums.definition.condition, new Array()));
 			}
 			else if (action.type == generator.enums.error.parse) {
@@ -3898,8 +3989,8 @@ var generator = {
 
                 var lastDefinition = definitionStack[definitionStack.length - 1];
                 lastDefinition.contains.push(line);
-
-                if (lastDefinition.indention == tabCountAheadByOne || i + 1 == parseData.symbol.length) {
+				//alert( (i + 1) + ": " + lastDefinition.indention + " = " +  tabCountAheadByOne + "[" + tabCount + "]");
+                if (lastDefinition.indention == tabCountAheadByOne) {
 
                     //generator.functions.insert(lastDefinition.name, content, returnType, parameterString);
 
@@ -3918,11 +4009,10 @@ var generator = {
                     else if (lastDefinition.definitionType == generator.enums.definition.condition) {
 
 						// Add condition statement generation here
-						//alert(lastDefinition.contains.length);
+
 						for (var j = 0; j < lastDefinition.contains.length; j++) {
 
 							var tmpLine = lastDefinition.contains[j];
-							console.log(tmpLine);
 							if (j == 0) {
 
 								tmpLine.clauseStatement = true;
@@ -3930,26 +4020,39 @@ var generator = {
 							}
 							else {
 
-								for (var k = 0; k < lastDefinition.indention + 1; k++) {
+								for (var k = 0; k < lastDefinition.indention; k++) {
 
 									tmpLine.contentStack[0] = "\t" + tmpLine.contentStack[0];
 								}
 							}
 
-                            buffer.push(tmpLine);
-                            if (j + 1 == lastDefinition.contains.length) {
+							if (definitionStack.length - 1 > 0) {
 
-								var tmpCopyLine = clone.line(tmpLine);
-								tmpCopyLine.contentStack = [];
-								tmpCopyLine.actionStack =  [];
-								tmpCopyLine.contentStack.push(generator.enums.symbol.closeBracket);
-								tmpCopyLine.values = [];
-								tmpCopyLine.tokens = [];
-								tmpCopyLine.length = 0;
-								tmpCopyLine.id = [];
-								tmpCopyLine.clauseStatement = true;
-								buffer.push(tmpCopyLine);
+								definitionStack[definitionStack.length - 2].contains.push(tmpLine);
 							}
+							else {
+								buffer.push(tmpLine);
+							}
+
+						}
+
+						var tmpCopyLine = clone.line(tmpLine);
+						tmpCopyLine.actionStack =  [];
+						tmpCopyLine.contentStack = [];
+						tmpCopyLine.actionStack.push(new Action(generator.enums.action.conditionStatementClosure));
+						tmpCopyLine.contentStack.push(generator.enums.symbol.closeBracket);
+						tmpCopyLine.values = [];
+						tmpCopyLine.tokens = [];
+						tmpCopyLine.length = 0;
+						tmpCopyLine.id = [];
+						tmpCopyLine.clauseStatement = true;
+
+						if (definitionStack.length - 1 > 0) {
+
+							definitionStack[definitionStack.length - 2].contains.push(tmpCopyLine);
+						}
+						else {
+							buffer.push(tmpCopyLine);
 						}
 
 						for (var j = 0; j < lastDefinition.variables.length; j++) {
@@ -3957,7 +4060,104 @@ var generator = {
                             generator.refactor.removeVariable(lastDefinition.variables[j]);
 						}
                     }
+
                     definitionStack.pop();
+                }
+                else if (lastDefinition.indention > tabCountAheadByOne || tabCountAheadByOne == -1) {
+
+					while (definitionStack.length > 0) {
+
+						if (lastDefinition.indention == tabCountAheadByOne) {
+							break;
+						}
+
+						var lastDefinition = definitionStack[definitionStack.length - 1];
+						if (lastDefinition.definitionType == generator.enums.definition.function) {
+
+							tokenizer.python.token.add.keyword(lastDefinition.name);
+							dictionary.pages.addWord(new Word(
+								lastDefinition.name, function(value) {
+									return this.name + "(" + value.join(" ") + ")";
+								}
+							, new Array(lastDefinition.name, "user-defined", "Python-language"), generator.enums.python.data.type.integer));
+
+							generator.refactor.functionList.push(lastDefinition);
+							generator.reparse = true;
+						}
+						else if (lastDefinition.definitionType == generator.enums.definition.condition) {
+
+							// Add condition statement generation here
+
+							for (var j = 0; j < lastDefinition.contains.length; j++) {
+
+								var tmpLine = lastDefinition.contains[j];
+								if (j == 0) {
+
+									tmpLine.clauseStatement = true;
+									tmpLine.contentStack[0] += " " + generator.enums.symbol.openBracket;
+								}
+								else {
+
+									//lert(typeof(tmpLine.arranged) === "undefined");
+									if (typeof(tmpLine.arranged) === "undefined") {
+										tmpLine.arranged = false;
+
+									}
+
+									if (!tmpLine.arranged) {
+
+										//alert(lastDefinition.indention + "=>" + tmpLine.contentStack[0]);
+										for (var k = 0; k < lastDefinition.indention; k++) {
+											//////////////////////////////////////////////////////
+											//  Need to do something about that tabbing spaces  //
+											//  that happens when there are nested statements   //
+											//////////////////////////////////////////////////////
+											tmpLine.contentStack[0] = "\t" + tmpLine.contentStack[0];
+										}
+										//alert(lastDefinition.indention + "=>" + tmpLine.contentStack[0]);
+										tmpLine.arranged = true;
+									}
+								}
+
+								if (definitionStack.length - 1 > 0) {
+
+									definitionStack[definitionStack.length - 2].contains.push(tmpLine);
+								}
+								else {
+									buffer.push(tmpLine);
+								}
+
+							}
+
+							var tmpCopyLine = clone.line(tmpLine);
+							tmpCopyLine.actionStack =  [];
+							tmpCopyLine.contentStack = [];
+							tmpCopyLine.actionStack.push(new Action(generator.enums.action.conditionStatementClosure));
+							tmpCopyLine.contentStack.push(generator.enums.symbol.closeBracket);
+							tmpCopyLine.values = [];
+							tmpCopyLine.tokens = [];
+							tmpCopyLine.length = 0;
+							tmpCopyLine.id = [];
+							tmpCopyLine.clauseEnd = true;
+							tmpCopyLine.clauseStatement = true;
+
+
+							if (definitionStack.length - 1 > 0) {
+
+								definitionStack[definitionStack.length - 2].contains.push(tmpCopyLine);
+							}
+							else {
+								buffer.push(tmpCopyLine);
+							}
+
+							for (var j = 0; j < lastDefinition.variables.length; j++) {
+
+								generator.refactor.removeVariable(lastDefinition.variables[j]);
+							}
+						}
+
+						definitionStack.pop();
+					}
                 }
 
                 pushToBuffer = false;
@@ -3989,14 +4189,31 @@ var generator = {
 			generator.variables.functions += generator.functions.list[i].type + " " + generator.functions.list[i].name + " (" + generator.functions.list[i].param + ") {\n" + generator.functions.list[i].content + "}\n\n";
 		}
 
+		var tabExtraSpace = "";
+		var tabCount = 0;
+
 		for (var i = 0; i < buffer.length; i++) {
 			for (var j = 0; j < buffer[i].contentStack.length; j++) {
 
 				if (!buffer[i].clauseStatement) {
-					bodyText += "\t" + buffer[i].contentStack[j] + ";\n";
+					bodyText += "\t" + tabExtraSpace + buffer[i].contentStack[j] + ";\n";
 				}
 				else {
-					bodyText += "\t" + buffer[i].contentStack[j] + "\n";
+
+					if (buffer[i].contentStack[j] == generator.enums.symbol.closeBracket) {
+						buffer[i].clauseEnd = true;
+					}
+					if (typeof(buffer[i].clauseEnd) !== "undefined") {
+						tabCount -= 1;
+						if (tabCount <= 0) {
+							tabExtraSpace = "";
+						}
+					}
+					bodyText += "\t" + tabExtraSpace + buffer[i].contentStack[j] + "\n";
+					if (typeof(buffer[i].clauseEnd) === "undefined") {
+						tabExtraSpace = "\t";
+						tabCount += 1;
+					}
 				}
 			}
 		}
