@@ -23,7 +23,7 @@ directly and be used by other functions since the result of the *convert functio
 that can be manipulated directly by other applications.
 
 ```javascript
-s2sc.convert(s2sc.language.python2, s2sc.language.c, "print(\"Hello World!\"")
+s2sc.convert(s2sc.language.python2, s2sc.language.c, "print(\"Hello World!\")")
 ```
 
 ```C
