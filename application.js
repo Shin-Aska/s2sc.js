@@ -80,7 +80,7 @@ $( document ).ready(function() {
 				var symbol = s2sc.symbol;
 				consolehandler.console = "console";
 
-				var resultant = "<style>td, th {border: 1px solid black;}</style>";
+				var resultant = "";
 				resultant += "<p>Generating Tokens from String...\n</p>";
 				resultant += "<p>Showing result...</p>";
 				resultant += "<hr>";
@@ -90,19 +90,20 @@ $( document ).ready(function() {
 				}
 				resultant += "</table>";
 				resultant += "<hr>";
-				$("#console").contents().find('html').html(resultant);
-				consolehandler.showParsingInformation(map);
+				$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + resultant + consolehandler.showParsingInformation(map));
 
 				document.getElementById('output').value = result;
 				editAreaLoader.setValue("output", result);
 			}
 			catch (exception) {
 
+				var map = s2sc.map;
+
 				if (typeof(exception.fileName) !== "undefined") {
-					$("#console").contents().find('html').html(exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber);
+					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber + "<br>" + consolehandler.showParsingInformation(map) + "</body></html>");
 				}
 				else {
-					$("#console").contents().find('html').html(exception + " [File and Line stack trace only available on Firefox]");
+					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + " [File and Line stack trace only available on Firefox]" + "<br>" + consolehandler.showParsingInformation(map) + "</body></html>");
 				}
 
 				document.getElementById('output').value = "";

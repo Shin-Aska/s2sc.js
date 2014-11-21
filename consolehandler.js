@@ -48,8 +48,7 @@ var consolehandler = {
 			}
 		}
 
-		string = $("#" + consolehandler.console).contents().find('html').html() + string;
-		$("#" + consolehandler.console).contents().find('html').html(string);
+		return string;
 	}
 }
 

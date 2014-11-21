@@ -50,6 +50,7 @@ var parser = {
 		//Function Defintion
 		"funcDef <- def id ( paramList ) : | def id ( ) : | funcDefInit : | def id :",
 		"funcDefInit <- def id ( id )",
+		"funcCall <- id ( paramList ) F | id ( ) F",
 
 		//Class Definition
 		"classDef <- class id :",
@@ -134,7 +135,7 @@ var parser = {
 		"floorQuotient <- id // id | const // const | id // const | const // id | result // id | id // result | result // const | const // result",
 		"floorQuotient <- difference // id | difference // const | id // difference | const // difference | difference // result | result // difference | result // result",
 
-		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id )",
+		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id ) | funcCall",
 
         "const <- + const | + id | - const | - id",
 		"decl <- id = result F | id = const F | id = id F",

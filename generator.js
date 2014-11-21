@@ -3660,23 +3660,26 @@ var generator = {
 										tabExtraSpace += "\t";
 									}
 								}
+
 							}
 							else {
 
-								if (tabExtraSpace != "") {
-									originalTabExtaSpace = tabExtraSpace;
-									tabExtraSpace = "";
-									for (var k = 0; k < tabCounter; k++) {
-										tabExtraSpace += "\t";
-									}
-									content += tabSpace + tabExtraSpace + "\t" + fcontent[i].contentStack[j] + ";\n";
-									tabExtraSpace = originalTabExtaSpace;
-								}
-								else {
+								tabExtraSpace = "";
 
-									content += tabSpace + tabExtraSpace + fcontent[i].contentStack[j] + ";\n";
+								var tabLength = 0;
+								try {
+
+									tabLength = tabCountList[tabCountList.length - 1] + 1;
+								}
+								catch (exception) {
+
+									tabLength = 0;
 								}
 
+								for (var k = 0; k < tabLength; k++) {
+									tabExtraSpace += "\t";
+								}
+								content += tabSpace + tabExtraSpace + fcontent[i].contentStack[j] + ";\n";
 							}
 
 						}
@@ -3785,6 +3788,7 @@ var generator = {
 		generator.unions.clear();
 		generator.structures.clear();
 		generator.functions.clear();
+		errorHandler.clear();
 
         // Container of loop and functions
         // as it is scanned by the generator
@@ -3977,8 +3981,7 @@ var generator = {
 			}
 			else if (action.type == generator.enums.error.parse) {
 
-				line.contentStack = [];
-				line.contentStack.push("//Invalid Syntax (" + line.values.join(" ") + ")");
+				errorHandler.raiseError(new Error(i + 1, values.slice(), "Syntax Error"));
 			}
 
             var pushToBuffer = true;
@@ -4218,17 +4221,18 @@ var generator = {
 			}
 		}
 
-		/*if (hasReturnType) {
+		if (errorHandler.stack.length > 0) {
+			errorHandler.throwException();
+		}
+		else {
 
-			generator.variables.bodyEnd = "}";
-		}*/
+			result = generator.variables.comment + generator.variables.headerString +
+			"\n" + generator.variables.defineString + "\n" + generator.variables.struct + generator.variables.union +
+			generator.variables.functions + generator.variables.bodyBegin + bodyText +
+			generator.variables.bodyEnd;
 
-		result = generator.variables.comment + generator.variables.headerString +
-		"\n" + generator.variables.defineString + "\n" + generator.variables.struct + generator.variables.union +
-        generator.variables.functions + generator.variables.bodyBegin + bodyText +
-		generator.variables.bodyEnd;
-
-		return result;
+			return result;
+		}
 
 	},
 
