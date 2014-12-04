@@ -60,8 +60,8 @@ var parser = {
 		"condStmt <- if result : | elif result :",
 
 		//Function Parameters
-		"id <- undefined",
-		"undefined <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( )",
+		"id <- funcCall",
+		"funcCall  <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( )",
 		"paramList <- result , result F | id , id  F | sConst , sConst F",
 		"paramList <- result , id  F | id , result  F | id , sConst F",
 		"paramList <- sConst , result  F | sConst , id  F | result , sConst F",
@@ -115,7 +115,7 @@ var parser = {
 
 		"quotient <- id / id | const / const | id / const | const / id | result / id | id / result | result / const | const / result",
 		"quotient <- quotient / id | quotient / const | id / quotient | const / quotient | quotient / quotient | quotient / result | result / quotient | result / result",
-        "quotient <- id / boolStmt | boolStmt / id | const / boolStmt | boolStmt / const | boolStmt / result | result / boolStmt",
+		"quotient <- id / boolStmt | boolStmt / id | const / boolStmt | boolStmt / const | boolStmt / result | result / boolStmt",
 
 		"sum <- id + id | const + const | id + const | const + id | result + id | id + result | result + const | const + result",
 		"sum <- sum + const | sum + id | id + sum | const + sum | sum + result | result + sum | result + result",
@@ -137,7 +137,7 @@ var parser = {
 
 		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id ) | funcCall",
 
-        "const <- + const | + id | - const | - id",
+		"const <- + const | + id | - const | - id",
 		"decl <- id = result F | id = const F | id = id F",
 		"strDecl <- id = sConst F",
 		"boolDecl <- id = boolStmt F",

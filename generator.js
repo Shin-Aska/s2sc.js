@@ -191,7 +191,7 @@ var generator = {
 					bool: "bool",
 					string: "string",
 					object: "object",
-					void: 0
+					void: 0,
 				}
 			},
 
@@ -233,6 +233,11 @@ var generator = {
 					string: "string",
 					object: "object",
 					void: 0
+				},
+
+				structure: {
+
+					list: "list"
 				}
 			},
 
@@ -377,11 +382,7 @@ var generator = {
 
 						generator.headers.insert("stdio.h");
 						generator.headers.insert("stdlib.h");
-						generator.headers.insert("gc.h");
-						generator.defines.insert("malloc(n)", "GC_MALLOC(n)");
-						generator.defines.insert("calloc(m,n)", "GC_MALLOC(m*n)");
-						generator.defines.insert("free(p)", "GC_FREE(p)");
-						generator.defines.insert("realloc(n)", "GC_REALLOC(n)");
+						generator.includer.function.memory.gc();
 						generator.functions.insert("toString_int",
 							"\tchar *buffer = (char*)calloc(2048, sizeof(char));\n\tsprintf(buffer, \"%d\", num);\n\treturn buffer;\n",
 							"char *", "int num"
@@ -392,11 +393,7 @@ var generator = {
 
 						generator.headers.insert("stdio.h");
 						generator.headers.insert("stdlib.h");
-						generator.headers.insert("gc.h");
-						generator.defines.insert("malloc(n)", "GC_MALLOC(n)");
-						generator.defines.insert("calloc(m,n)", "GC_MALLOC(m*n)");
-						generator.defines.insert("free(p)", "GC_FREE(p)");
-						generator.defines.insert("realloc(n)", "GC_REALLOC(n)");
+						generator.includer.function.memory.gc();
 						if (generator.options.useDoubleInsteadOfFloat) {
 							generator.functions.insert("toString_double",
 								"\tchar *buffer = (char*)calloc(2048, sizeof(char));\n\tsprintf(buffer, \"%f\", num);\n\treturn buffer;\n",
@@ -418,11 +415,7 @@ var generator = {
 						generator.headers.insert("stdlib.h");
 						generator.headers.insert("stdarg.h");
 						generator.headers.insert("string.h");
-						generator.headers.insert("gc.h");
-						generator.defines.insert("malloc(n)", "GC_MALLOC(n)");
-						generator.defines.insert("calloc(m,n)", "GC_MALLOC(m*n)");
-						generator.defines.insert("free(p)", "GC_FREE(p)");
-						generator.defines.insert("realloc(n)", "GC_REALLOC(n)");
+						generator.includer.function.memory.gc();
 						generator.functions.insert("strConcat",
 							"\tchar *buffer = (char*)calloc(2048, sizeof(char));\n\tstrcpy(buffer, \"\");\n\n\tva_list vl;\n\tva_start(vl, limit);\n\tfor (int i = 0; i < limit; i++) {\n\t\tstrcat(buffer, va_arg(vl, char*));\n\t}\n\tva_end(vl);\n\treturn buffer;\n",
 							"char *", "int limit, ..."
@@ -436,7 +429,26 @@ var generator = {
 				pow: function() {
 					generator.headers.insert("tgmath.h");
 				}
-			}
+			},
+
+			loop: {
+
+				range: function() {
+					generator.headers.insert("stdlib.h");
+				}
+			},
+
+			memory: {
+
+				gc: function() {
+
+					generator.headers.insert("gc.h");
+					generator.defines.insert("malloc(n)", "GC_MALLOC(n)");
+					generator.defines.insert("calloc(m,n)", "GC_MALLOC(m*n)");
+					generator.defines.insert("free(p)", "GC_FREE(p)");
+					generator.defines.insert("realloc(n)", "GC_REALLOC(n)");
+				}
+			},
 		}
 	},
 
@@ -744,7 +756,12 @@ var generator = {
 													}
 												}
 
-												buffer[i].contentStack[0] = buffer[i].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(*" + content + ")");
+												if (tmpVariableHolder.type == generator.enums.c.data.type.string) {
+													buffer[i].contentStack[0] = buffer[i].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(" + content + ")");
+												}
+												else {
+													buffer[i].contentStack[0] = buffer[i].contentStack[0].replace(RegExp('\\b' + tmpVariableHolder.name + '\\b','g'), "(*" + content + ")");
+												}
 
 												for (var k = 0; k < buffer[i].tokens.length; k++) {
 
@@ -2119,9 +2136,7 @@ var generator = {
 						}
 						else if (line.tokens[j] == generator.enums.token.constant) {
 
-
-							if (variable.type == 0 ||
-							   (variable.type != generator.enums.c.data.type.float && variable.type != generator.enums.c.data.type.bool)) {
+							if (variable.type == 0) {
 								try {
 
 									variable.type = isInteger(line.values[j]) ?
@@ -2132,6 +2147,12 @@ var generator = {
 
 									legal = false;
 								}
+							}
+							else if (variable.type == generator.enums.python.data.type.string) {
+
+								variable.type = isInteger(line.values[j]) ?
+									generator.enums.c.data.type.integer :
+									generator.enums.c.data.type.float;
 							}
 							else {
 
@@ -2188,7 +2209,10 @@ var generator = {
 						}
 						else if (line.tokens[j] == generator.enums.token.keyword) {
 
-							var funcType = dictionary.pages.findWord(line.values[j], currentLanguage).returnType;
+							var keyword = dictionary.pages.findWord(line.values[j], currentLanguage);
+							var funcType = keyword.returnType;
+
+
 							if (variable.type == 0 ||
 								variable.type != generator.enums.c.data.type.float &&
 								variable.type != generator.enums.c.data.type.bool) {
@@ -2217,6 +2241,10 @@ var generator = {
 											numericVariables++;
 										}
 									}
+									else {
+
+										variable.type = funcType;
+									}
 								}
 							}
 							else {
@@ -2232,6 +2260,10 @@ var generator = {
 									if (!typeCasted && isStr) {
 										numericVariables++;
 									}
+								}
+								else {
+
+									variable.type = funcType;
 								}
 							}
 						}
@@ -2299,7 +2331,6 @@ var generator = {
 							else {
 
 								generator.c.to.python.refactor(variable, buffer);
-
 								if (variable.ambigious) {
 
 									if (generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type != variable.type) {
@@ -2340,6 +2371,7 @@ var generator = {
 						if (newDeclaration) {
 
 							var insideParameter = false;
+							//alert(variable.type);
 
 							if (definitionStack.length > 0) {
 
@@ -4039,6 +4071,11 @@ var generator = {
 
 						}
 
+						// This is for inserting the closing bracket for the condition statement.
+						// If it sees that there is still content inside the definitionStack,
+						// the line buffer is instead pushed to the top of the stack, else it
+						// the line is pushed directly to the buffer.
+
 						var tmpCopyLine = clone.line(tmpLine);
 						tmpCopyLine.actionStack =  [];
 						tmpCopyLine.contentStack = [];
@@ -4101,10 +4138,9 @@ var generator = {
 								}
 								else {
 
-									//lert(typeof(tmpLine.arranged) === "undefined");
+									//alert(typeof(tmpLine.arranged) === "undefined");
 									if (typeof(tmpLine.arranged) === "undefined") {
 										tmpLine.arranged = false;
-
 									}
 
 									if (!tmpLine.arranged) {

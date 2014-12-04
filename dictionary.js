@@ -27,12 +27,16 @@ function Candidate (Cname, Cindex, Cmatches) {
 // Word object is a representation of a function in the generator's
 // knowledge base, it holds the name, the definition, keyword and the
 // return type of the object
-function Word (Wname, Wdefinition, Wkeyword, Wtype) {
+function Word (Wname, Wdefinition, Wkeyword, Wtype, WRef) {
 
+	if (typeof(WRef) === "undefined") {
+        WRef = false;
+    }
 	this.name = Wname;
 	this.function = Wdefinition;
 	this.tags = Wkeyword;
 	this.returnType = Wtype;
+	this.reference = WRef;
 }
 
 // Keyword is a placeholder object that holds information about a Word's
@@ -349,15 +353,34 @@ var dictionary = {
 					generator.headers.insert("stdio.h");
 					var stringFormat = "";
 					var paramFormat = "";
+					var floatWord = "float";
+					if (generator.options.useDoubleInsteadOfFloat) {
+						floatWord = "double";
+					}
+
+					/*if (buffer.search("charValue") != -1) {
+
+						var variable = parameter[i].replace("(", "");
+						variable     = variable.replace(")", "");
+						variable     = variable.replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
+						alert(variable);
+					}*/
+
 					for (var i = 0; i < parameter.length; i++) {
 
 						if (parameter[i].search("intValue") != -1) {
+							parameter[i] = parameter[i].replace("(", "");
+							parameter[i] = parameter[i].replace(")", "");
 							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
 						}
-						else if (parameter[i].search("intValue") != -1) {
-							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+						else if (parameter[i].search(floatWord + "Value") != -1) {
+							parameter[i] = parameter[i].replace("(", "");
+							parameter[i] = parameter[i].replace(")", "");
+							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + "." + floatWord + "Value" + '\\b','g'), "");
 						}
 						else if (parameter[i].search("charValue") != -1) {
+							parameter[i] = parameter[i].replace("(", "");
+							parameter[i] = parameter[i].replace(")", "");
 							parameter[i] = parameter[i].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
 						}
 
@@ -375,7 +398,7 @@ var dictionary = {
 									paramFormat += "*" + link.name + ".floatValue";
 								}
 								else if (link.type == "double") {
-									stringFormat += "%ld";
+									stringFormat += "%Lf";
 									paramFormat += "*" + link.name + ".doubleValue";
 								}
 								else if (link.type == "string") {
@@ -394,7 +417,7 @@ var dictionary = {
 									paramFormat += link.name;
 								}
 								else if (link.type == "double") {
-									stringFormat += "%ld";
+									stringFormat += "%Lf";
 									paramFormat += link.name;
 								}
 								else if (link.type == "string") {
@@ -460,15 +483,28 @@ var dictionary = {
 					generator.headers.insert("stdio.h");
 					var stringFormat = "";
 					var paramFormat = "";
+					var floatWord = "float";
+					if (generator.options.useDoubleInsteadOfFloat) {
+						floatWord = "double";
+					}
+
+
+
 					for (var i = 0; i < parameter.length; i++) {
 
 						if (parameter[i].search("intValue") != -1) {
+							parameter[i] = parameter[i].replace("(", "");
+							parameter[i] = parameter[i].replace(")", "");
 							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".intValue" + '\\b','g'), "");
 						}
-						else if (parameter[i].search("intValue") != -1) {
-							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + ".floatValue" + '\\b','g'), "");
+						else if (parameter[i].search(floatWord + "Value") != -1) {
+							parameter[i] = parameter[i].replace("(", "");
+							parameter[i] = parameter[i].replace(")", "");
+							parameter[i] = parameter[i].substring(1).replace(RegExp('\\b' + "." + floatWord + "Value" + '\\b','g'), "");
 						}
 						else if (parameter[i].search("charValue") != -1) {
+							parameter[i] = parameter[i].replace("(", "");
+							parameter[i] = parameter[i].replace(")", "");
 							parameter[i] = parameter[i].replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
 						}
 
@@ -486,7 +522,7 @@ var dictionary = {
 									paramFormat += "*" + link.name + ".floatValue";
 								}
 								else if (link.type == "double") {
-									stringFormat += "%ld";
+									stringFormat += "%Lf";
 									paramFormat += "*" + link.name + ".doubleValue";
 								}
 								else if (link.type == "string") {
@@ -505,7 +541,7 @@ var dictionary = {
 									paramFormat += link.name;
 								}
 								else if (link.type == "double") {
-									stringFormat += "%ld";
+									stringFormat += "%Lf";
 									paramFormat += link.name;
 								}
 								else if (link.type == "string") {
@@ -572,6 +608,20 @@ var dictionary = {
 					return this.name + "(" + parameter.join(" ") + ")";
 				}
 			, new Array("math-operation", "exponent", "C-language"), generator.enums.c.data.type.float));
+
+			dictionary.pages.addWord(new Word(
+				"s2sc_pythonRange", function(parameter) {
+
+					generator.headers.insert("stdlib.h");
+					generator.includer.function.memory.gc();
+					generator.headers.insert("math.h");
+					generator.functions.insert(this.name,
+						"\tint rangeSize = abs(x - y);\n\tint *list = calloc(rangeSize, sizeof(int));\n\tint listIndex = 0;\n\tfor (int i = x; i < y; i++, listIndex++) {\n\t\tlist[listIndex] = i;\n\t}\n\treturn list;\n",
+						"int *", "int x, int y"
+					);
+					return this.name + "(" + parameter.join(" ") + ")";;
+				}
+			, new Array("array", "generator", "C-language"), generator.enums.python.data.type.integer, true));
 			//
 		}
 	},
@@ -619,6 +669,12 @@ var dictionary = {
 					return "!!";
 				}
 			, new Array("console", "output", "Python-language"), generator.enums.python.data.type.integer));
+
+			dictionary.pages.addWord(new Word(
+				"range", function(value) {
+
+				}
+			, new Array("array", "generator", "Python-language"), generator.enums.python.data.structure.list));
 		}
 	}
 }
