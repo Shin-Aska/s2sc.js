@@ -214,7 +214,7 @@ var tokenizer = {
 		token: {
 
 			keyword: [
-				"import", "from", "print", "raw_input", "sys",
+				"print", "raw_input",
 				"testFunc", "pow", "range"
 			],
 			symbol: [
@@ -225,7 +225,7 @@ var tokenizer = {
 			],
 			reserveWord: ["int", "float", "str", "def", "class", "True", "False",
 				"and", "or", "not", "if", "elif", "else", "return",
-				"for", "in", "while"
+				"for", "in", "while", "break", "import", "from"
 			],
 
 			add: {

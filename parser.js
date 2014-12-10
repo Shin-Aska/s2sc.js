@@ -38,8 +38,14 @@ var parser = {
 
 	grammar : [
 
-		"funcStrDecl <- strDecl + func",
+		//Import
+		"importWhole <- import id F",
+		"importComponent <- import id from id",
+		"importS <- import id .",
+		"import <- importS",
+		"actionImport <- importWhole | importComponent",
 
+		"funcStrDecl <- strDecl + func",
 		// For decimal
 		"const <- int ( sConst ) | int result | float ( sConst ) | float result | int ( boolStmt ) | float ( boolStmt )",
 
@@ -58,6 +64,11 @@ var parser = {
 		//Conditional Statement
 		"condStmt <- if boolStmt : | elif boolStmt : | else :",
 		"condStmt <- if result : | elif result :",
+
+		//Loop statement
+		"loopStmt <- forLoopStmt | whileLoopStmt",
+		"whileLoopStmt <- while boolStmt :",
+		"forLoopStmt <- for id in funcCall :",
 
 		//Function Parameters
 		"id <- funcCall",

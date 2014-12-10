@@ -178,6 +178,7 @@ var generator = {
 
 			function: "function",
 			condition: "condition",
+			loop: "loop",
 		},
 
 		c: {
@@ -192,6 +193,15 @@ var generator = {
 					string: "string",
 					object: "object",
 					void: 0,
+
+					pointer: {
+
+                        integer: "int *",
+                        float: "float *",
+                        bool: "bool *",
+                        void: "void *",
+                        object: "void *",
+					},
 				}
 			},
 
@@ -281,6 +291,9 @@ var generator = {
             booleanDeclaration: "boolDecl",
             conditionStatement: "condStmt",
             conditionStatementClosure: "condStmtClosure",
+            loopStatement: "loopStmt",
+            loopStatementClosure: "loopStmtClosure",
+            import: "actionImport",
         },
 
         shared: {
@@ -579,6 +592,7 @@ var generator = {
 	functions: {
 
 		list: Array(),
+
 		insert: function(name, content, type, parameter) {
 
 			var found = false;
@@ -594,10 +608,29 @@ var generator = {
 				generator.functions.list.push(struct);
 			}
 		},
+
+		search: function(name) {
+
+            var list = generator.functions.list;
+            for (var i = 0; i < list.length; i++) {
+
+                if (list[i].name == name) {
+                    return list[i];
+                }
+            }
+
+            throw generator.functions.exception.NoFunctionFoundException
+		},
+
 		clear: function() {
 
 			generator.variables.functions = "";
 			generator.functions.list = new Array();
+		},
+
+		exception: {
+
+            NoFunctionFoundException: "Function can't be found on the generator database",
 		}
 	},
 
@@ -606,6 +639,7 @@ var generator = {
 
 		variableList: [],
 		functionList: [],
+		loopCount: 0,
 
 		findVariable: function (name, debug) {
 
@@ -825,7 +859,7 @@ var generator = {
 					}
 				},
 
-				processBasicStatement: function (line, action, legal, definitionStack, currentLanguage, targetLanguage) {
+				processBasicStatement: function (buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage) {
 
 					line = clone.line(line);
 					var isStr = action.type == generator.enums.action.basic.stringConstant || action.type == generator.enums.action.return.string ? true : false;
@@ -1304,7 +1338,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -1347,7 +1381,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -1390,7 +1424,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -1416,7 +1450,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -1743,7 +1777,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -1786,7 +1820,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -1829,7 +1863,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -1854,7 +1888,7 @@ var generator = {
 													try {
 
 														var func = generator.refactor.getFunction(currentFunction);
-														var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+														var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 														result = candidate.function(currentContentBuffer.data);
 													}
 													catch (innerException) {
@@ -2210,7 +2244,24 @@ var generator = {
 						else if (line.tokens[j] == generator.enums.token.keyword) {
 
 							var keyword = dictionary.pages.findWord(line.values[j], currentLanguage);
-							var funcType = keyword.returnType;
+							var funcType = "";
+							try {
+                                var equivKeyword = dictionary.search.equivalentWord(targetLanguage, keyword);
+
+                                if (keyword.returnType == generator.enums.python.data.structure.list) {
+
+									funcType = equivKeyword.returnType + " *";
+                                }
+                                else {
+
+									funcType = equivKeyword.returnType;
+                                }
+                                //Put data type comparison here :)
+							}
+							catch (exception) {
+
+                                funcType = keyword.returnType;
+							}
 
 
 							if (variable.type == 0 ||
@@ -2683,7 +2734,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 
 															if (candidate.returnType == generator.enums.c.symbol.string) {
@@ -2732,7 +2783,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 
 															if (candidate.returnType == generator.enums.c.symbol.string) {
@@ -2781,7 +2832,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 
 															if (candidate.returnType == generator.enums.c.symbol.string) {
@@ -2812,7 +2863,7 @@ var generator = {
 													try {
 
 														var func = generator.refactor.getFunction(currentFunction);
-														var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+														var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 														result = candidate.function(currentContentBuffer.data);
 
 														if (candidate.returnType == generator.enums.c.symbol.string) {
@@ -3261,7 +3312,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -3302,7 +3353,7 @@ var generator = {
 														try {
 
 															var func = generator.refactor.getFunction(currentFunction);
-															var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+															var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 															result = candidate.function(currentContentBuffer.data);
 														}
 														catch (innerException) {
@@ -3328,7 +3379,7 @@ var generator = {
 													try {
 
 														var func = generator.refactor.getFunction(currentFunction);
-														var candidate = generator.c.to.python.processUserDefinedFunction(func, currentContentBuffer.data);
+														var candidate = generator.c.to.python.processUserDefinedFunction(buffer, func, currentContentBuffer.data);
 														result = candidate.function(currentContentBuffer.data);
 													}
 													catch (innerException) {
@@ -3435,7 +3486,7 @@ var generator = {
 					return line;
 				},
 
-				processConditionStatement: function (line, action, legal, definitionStack, currentLanguage, targetLanguage) {
+				processConditionStatement: function (buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage) {
 
 					var contained = false;
 					var index = 0;
@@ -3473,7 +3524,7 @@ var generator = {
 					if (type == 3) {
 						contained = true;
 					}
-					line = generator.c.to.python.processBasicStatement(line, action, legal, definitionStack, currentLanguage, targetLanguage);
+					line = generator.c.to.python.processBasicStatement(buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage);
 
 					if (contained == false) {
 
@@ -3493,7 +3544,138 @@ var generator = {
 					return line;
 				},
 
-				processUserDefinedFunction: function (func, valueParameters) {
+				processLoopStatement: function (buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage) {
+
+					var containerExists = false;
+					var contentFlag = false;
+					var contained = false;
+					var container = "";
+					var variable = "";
+					var content = "";
+
+					var index = 0;
+					var type  = 0;
+
+					line = clone.line(line);
+					line.tokens.splice(line.tokens.length - 1, 1);
+					line.values.splice(line.values.length - 1, 1);
+
+
+					for (var i = 0; i < line.values.length; i++) {
+
+						if (line.values[i] == "for") {
+							index = i + 1;
+							type = 1;
+						}
+						else if (line.values[i] == "while") {
+							index = i + 1;
+							type = 2;
+						}
+
+						if (type == 1) {
+
+							if (line.tokens[i] == generator.enums.token.identifier) {
+
+								container = line.values[i];
+								try {
+
+									variable = generator.refactor.getVariable(container);
+									containerExists = true;
+								}
+								catch (exception) {
+
+								}
+							}
+							else if (line.values[i - 1] == "in") {
+
+								contentFlag = true;
+							}
+
+							if (contentFlag) {
+
+								content += line.values[i];
+								if (i + 1 < line.values.length) {
+									content += " ";
+								}
+							}
+						}
+					}
+
+					if (line.tokens[index] == generator.enums.token.symbol && line.values[index] == generator.enums.symbol.leftParenthesis) {
+
+						if (line.values[index] == generator.enums.symbol.leftParenthesis && line.values[line.values.length - 1] == generator.enums.symbol.rightParenthesis) {
+
+							contained = true;
+						}
+					}
+
+					if (type == 1) {
+
+						var initializer = "";
+						var cbuffer = "";
+
+						try {
+
+							var keyword = dictionary.pages.findWord(content.split(" ")[0], currentLanguage);
+							var equivKeyword = dictionary.search.equivalentWord(targetLanguage, keyword);
+							generator.refactor.loopCount += 1;
+							var loopVarCount = "s2sc_lpcc" + generator.refactor.loopCount;
+							var funcType = "";
+
+							if (keyword.returnType == generator.enums.python.data.structure.list) {
+
+								funcType = equivKeyword.returnType + " *";
+							}
+							else {
+
+								funcType = equivKeyword.returnType;
+							}
+
+							if (containerExists) {
+								variable.type = equivKeyword.returnType;
+								generator.c.to.python.refactor(variable, buffer);
+							}
+							else {
+
+								variable = new Variable(container, 0, -1);
+								var exist = false;
+
+								for (var j = 0; j < definitionStack[definitionStack.length - 1].variables.length; j++) {
+
+									if (definitionStack[definitionStack.length - 1].variables[j] == variable.name) {
+										insideParameter = true;
+										exist = true;
+										break;
+									}
+								}
+
+								if (!exist) {
+									definitionStack[definitionStack.length - 1].variables.push(variable.name);
+								}
+								generator.refactor.insertVariable(variable);
+							}
+
+							equivKeyword.function([]);
+							line.contentStack.push(funcType + " " + container + "Loop = " + content.replace(keyword.name, equivKeyword.name) + ";");
+							cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
+						}
+						catch (exception) {
+
+							throw exception;
+						}
+
+						line.contentStack.push(cbuffer);
+					}
+					else if (type == 2) {
+
+						line = generator.c.to.python.processBasicStatement(buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage);
+						line.contentStack[0] = "while " + line.contentStack[0];
+					}
+
+					return line;
+				},
+
+				processUserDefinedFunction: function (buffer, func, valueParameters) {
 
 
 					var argumentNameList = [];
@@ -3636,7 +3818,7 @@ var generator = {
 							action.type == generator.enums.action.return.constant      ||
 							action.type == generator.enums.action.return.string) {
 
-							fcontent.push(generator.c.to.python.processBasicStatement(func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language"));
+							fcontent.push(generator.c.to.python.processBasicStatement(new Array(), func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language"));
 						}
 						else if (action.type == generator.enums.action.conditionStatement) {
 
@@ -3778,7 +3960,7 @@ var generator = {
 										}
 									}
 
-									var resultLine = generator.c.to.python.processBasicStatement(new Line(-1, paramMap, paramValues, paramID), new Action(parser.parse(paramToken).symbol), true, new Array(), "C-language", "Python-language");
+									var resultLine = generator.c.to.python.processBasicStatement(new Array(), new Line(-1, paramMap, paramValues, paramID), new Action(parser.parse(paramToken).symbol), true, new Array(), "C-language", "Python-language");
 
 									parameterString += resultLine.contentStack[0];
 									if (value[i] == generator.enums.symbol.comma) {
@@ -3829,6 +4011,7 @@ var generator = {
 
 		var definitionStack  = [];
 		generator.refactor.functionList = [];
+		generator.refactor.loopCount = 0;
 
 		for (var i = 0; i < parseData.symbol.length; i++) {
 
@@ -3963,7 +4146,7 @@ var generator = {
 				}
 				else {
 
-					line = generator.c.to.python.processBasicStatement(line, action, legal, definitionStack, currentLanguage, targetLanguage);
+					line = generator.c.to.python.processBasicStatement(buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage);
 				}
 			}
 			else if (action.type == generator.enums.action.functionDefinition) {
@@ -4007,9 +4190,18 @@ var generator = {
 			}
 			else if (action.type == generator.enums.action.conditionStatement) {
 
-				line = generator.c.to.python.processConditionStatement(line, action, legal, definitionStack, currentLanguage, targetLanguage);
-				//alert(tabCount + "=>" + line.contentStack[0]);
+				line = generator.c.to.python.processConditionStatement(buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage);
 				definitionStack.push(new tmpDefinitionState("", new Array(), tabCount, new Array(), generator.enums.definition.condition, new Array()));
+			}
+			else if (action.type == generator.enums.action.loopStatement) {
+
+				definitionStack.push(new tmpDefinitionState("", new Array(), tabCount, new Array(), generator.enums.definition.loop, new Array()));
+				line = generator.c.to.python.processLoopStatement(buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage);
+
+			}
+			else if (action.type == generator.enums.action.import) {
+
+
 			}
 			else if (action.type == generator.enums.error.parse) {
 
@@ -4020,15 +4212,15 @@ var generator = {
 
 			// This line here tells whether or not a line of code is inside a function
 			// or not.
+
             if (definitionStack.length > 0) {
 
                 var lastDefinition = definitionStack[definitionStack.length - 1];
                 lastDefinition.contains.push(line);
-				//alert( (i + 1) + ": " + lastDefinition.indention + " = " +  tabCountAheadByOne + "[" + tabCount + "]");
+
                 if (lastDefinition.indention == tabCountAheadByOne) {
 
                     //generator.functions.insert(lastDefinition.name, content, returnType, parameterString);
-
                     if (lastDefinition.definitionType == generator.enums.definition.function) {
 
 						tokenizer.python.token.add.keyword(lastDefinition.name);
@@ -4044,7 +4236,6 @@ var generator = {
                     else if (lastDefinition.definitionType == generator.enums.definition.condition) {
 
 						// Add condition statement generation here
-
 						for (var j = 0; j < lastDefinition.contains.length; j++) {
 
 							var tmpLine = lastDefinition.contains[j];
@@ -4100,6 +4291,78 @@ var generator = {
                             generator.refactor.removeVariable(lastDefinition.variables[j]);
 						}
                     }
+					else if (lastDefinition.definitionType == generator.enums.definition.loop) {
+
+						generator.refactor.loopCount -= 1;
+						for (var j = 0; j < lastDefinition.contains.length; j++) {
+
+							var tmpLine = lastDefinition.contains[j];
+							var type = tmpLine.contentStack.length > 1 ? 1 : 2;
+
+							if (j == 0) {
+
+								tmpLine.clauseStatement = true;
+
+								if (type == 1) {
+									tmpLine.contentStack[1] += " " + generator.enums.symbol.openBracket;
+								}
+								else {
+									tmpLine.contentStack[0] += " " + generator.enums.symbol.openBracket;
+								}
+
+							}
+							else {
+
+								if (typeof(tmpLine.arranged) === "undefined") {
+									tmpLine.arranged = false;
+								}
+
+								if (!tmpLine.arranged) {
+
+									for (var k = 0; k < lastDefinition.indention; k++) {
+
+										tmpLine.contentStack[0] = "\t" + tmpLine.contentStack[0];
+									}
+
+									tmpLine.arranged = true;
+								}
+							}
+
+							if (definitionStack.length - 1 > 0) {
+
+								definitionStack[definitionStack.length - 2].contains.push(tmpLine);
+							}
+							else {
+								buffer.push(tmpLine);
+							}
+						}
+
+						var tmpCopyLine = clone.line(tmpLine);
+						tmpCopyLine.actionStack =  [];
+						tmpCopyLine.contentStack = [];
+						tmpCopyLine.actionStack.push(new Action(generator.enums.action.conditionStatementClosure));
+						tmpCopyLine.contentStack.push(generator.enums.symbol.closeBracket);
+						tmpCopyLine.values = [];
+						tmpCopyLine.tokens = [];
+						tmpCopyLine.length = 0;
+						tmpCopyLine.id = [];
+						tmpCopyLine.clauseEnd = true;
+						tmpCopyLine.clauseStatement = true;
+
+
+						if (definitionStack.length - 1 > 0) {
+
+							definitionStack[definitionStack.length - 2].contains.push(tmpCopyLine);
+						}
+						else {
+							buffer.push(tmpCopyLine);
+						}
+
+						for (var j = 0; j < lastDefinition.variables.length; j++) {
+
+							generator.refactor.removeVariable(lastDefinition.variables[j]);
+						}
+					}
 
                     definitionStack.pop();
                 }
@@ -4194,6 +4457,78 @@ var generator = {
 								generator.refactor.removeVariable(lastDefinition.variables[j]);
 							}
 						}
+						else if (lastDefinition.definitionType == generator.enums.definition.loop) {
+
+							generator.refactor.loopCount -= 1;
+							for (var j = 0; j < lastDefinition.contains.length; j++) {
+
+								var tmpLine = lastDefinition.contains[j];
+								var type = tmpLine.contentStack.length > 1 ? 1 : 2;
+
+								if (j == 0) {
+
+									tmpLine.clauseStatement = true;
+
+									if (type == 1) {
+										tmpLine.contentStack[1] += " " + generator.enums.symbol.openBracket;
+									}
+									else {
+										tmpLine.contentStack[0] += " " + generator.enums.symbol.openBracket;
+									}
+
+								}
+								else {
+
+									if (typeof(tmpLine.arranged) === "undefined") {
+										tmpLine.arranged = false;
+									}
+
+									if (!tmpLine.arranged) {
+
+										for (var k = 0; k < lastDefinition.indention; k++) {
+
+											tmpLine.contentStack[0] = "\t" + tmpLine.contentStack[0];
+										}
+
+										tmpLine.arranged = true;
+									}
+								}
+
+								if (definitionStack.length - 1 > 0) {
+
+									definitionStack[definitionStack.length - 2].contains.push(tmpLine);
+								}
+								else {
+									buffer.push(tmpLine);
+								}
+							}
+
+							var tmpCopyLine = clone.line(tmpLine);
+							tmpCopyLine.actionStack =  [];
+							tmpCopyLine.contentStack = [];
+							tmpCopyLine.actionStack.push(new Action(generator.enums.action.conditionStatementClosure));
+							tmpCopyLine.contentStack.push(generator.enums.symbol.closeBracket);
+							tmpCopyLine.values = [];
+							tmpCopyLine.tokens = [];
+							tmpCopyLine.length = 0;
+							tmpCopyLine.id = [];
+							tmpCopyLine.clauseEnd = true;
+							tmpCopyLine.clauseStatement = true;
+
+
+							if (definitionStack.length - 1 > 0) {
+
+								definitionStack[definitionStack.length - 2].contains.push(tmpCopyLine);
+							}
+							else {
+								buffer.push(tmpCopyLine);
+							}
+
+							for (var j = 0; j < lastDefinition.variables.length; j++) {
+
+								generator.refactor.removeVariable(lastDefinition.variables[j]);
+							}
+						}
 
 						definitionStack.pop();
 					}
@@ -4232,6 +4567,8 @@ var generator = {
 		var tabCount = 0;
 
 		for (var i = 0; i < buffer.length; i++) {
+
+			var addTab = false;
 			for (var j = 0; j < buffer[i].contentStack.length; j++) {
 
 				if (!buffer[i].clauseStatement) {
@@ -4242,18 +4579,21 @@ var generator = {
 					if (buffer[i].contentStack[j] == generator.enums.symbol.closeBracket) {
 						buffer[i].clauseEnd = true;
 					}
+
 					if (typeof(buffer[i].clauseEnd) !== "undefined") {
 						tabCount -= 1;
 						if (tabCount <= 0) {
 							tabExtraSpace = "";
 						}
 					}
+
 					bodyText += "\t" + tabExtraSpace + buffer[i].contentStack[j] + "\n";
-					if (typeof(buffer[i].clauseEnd) === "undefined") {
-						tabExtraSpace = "\t";
-						tabCount += 1;
-					}
 				}
+			}
+
+			if (buffer[i].clauseStatement && typeof(buffer[i].clauseEnd) === "undefined") {
+				tabExtraSpace = "\t";
+				tabCount += 1;
 			}
 		}
 

@@ -149,7 +149,7 @@ var dictionary = {
 			var candidateWordIndex = -1;
 			var candidateTagMatches = 0;
 			var tmpTagMatches = 0;
-			console.log(keywordList);
+			//console.log(keywordList);
 
 			for (var i = 0; i < list.length; i++) {
 
