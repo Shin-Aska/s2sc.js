@@ -2076,7 +2076,7 @@ var generator = {
 
 						if (generator.options.detailedErrors) {
 							line.contentStack = [];
-							line.contentStack.push("//Invalid Syntax (" + line.values.join(" ") + ")");
+							errorHandler.raiseError(new Error(i + 1, line.values.slice(), "Syntax Error"));
 						}
 					}
 
@@ -3479,7 +3479,7 @@ var generator = {
 
 						if (generator.options.detailedErrors) {
 							line.contentStack = [];
-							line.contentStack.push("//Invalid Syntax (" + line.values.join(" ") + ")");
+							errorHandler.raiseError(new Error(i + 1, line.values.slice(), "Syntax Error"));
 						}
 					}
 

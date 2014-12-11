@@ -56,7 +56,7 @@ var parser = {
 		//Function Defintion
 		"funcDef <- def id ( paramList ) : | def id ( ) : | funcDefInit : | def id :",
 		"funcDefInit <- def id ( id )",
-		"funcCall <- id ( paramList ) F | id ( ) F",
+		"funcCall <- id ( paramList ) F | id ( ) F | id result F",
 
 		//Class Definition
 		"classDef <- class id :",
@@ -72,7 +72,7 @@ var parser = {
 
 		//Function Parameters
 		"id <- funcCall",
-		"funcCall  <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( )",
+		"funcCall  <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( ) ",
 		"paramList <- result , result F | id , id  F | sConst , sConst F",
 		"paramList <- result , id  F | id , result  F | id , sConst F",
 		"paramList <- sConst , result  F | sConst , id  F | result , sConst F",
