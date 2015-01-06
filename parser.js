@@ -80,6 +80,9 @@ var parser = {
 		"paramList <- const , result  F | result , const  F | const, sConst  F | const , const F",
 		"paramList <- paramList , id  F | paramList , sConst  F | paramList , result  F | paramList , const F",
 
+        // Array
+        "array <- [ paramList ]",
+
 		// Return Types
 
 		"returnConst <- return const F | return result F",
@@ -158,6 +161,10 @@ var parser = {
 		"cmpAsgn <- id -= result F | id -= const F | id -= id F | id += boolStmt F",
 		"cmpAsgn <- id /= result F | id /= const F | id /= id F | id += boolStmt F",
 		"cmpAsgn <- id += sConst F",
+
+		// Array Assignment
+
+		"arrayAsgn <- id = array",
 	],
 
 /*
