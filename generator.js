@@ -87,6 +87,7 @@ function StackContent () {
 function Line (Lline, Ltoks, Lval, LtokIDs) {
 
 	this.clauseStatement = false;
+	this.comment = false;
     this.length = Ltoks.length;
 	this.lineNumber = Lline;
 	this.tokens = Ltoks;
@@ -221,7 +222,10 @@ var generator = {
 				false: "false",
 				not: "!",
 				or: "||",
-				and: "&&"
+				and: "&&",
+				startComment: "/*",
+				endComment: "*/",
+				oneLineComment: "//",
 			},
 
 			action: {
@@ -346,6 +350,7 @@ var generator = {
 			reserveWord: "res",
 			stringConstant: "sConst",
 			tab: "tab",
+			comment: "cmnt",
 		}
 
 
@@ -1507,6 +1512,11 @@ var generator = {
 										stack.content.push(new StackContent());
 									}
 								}
+							}
+							else if (line.tokens[j] == generator.enums.token.comment) {
+
+                                var currentIndex 	= line.values[j].replace(/[^0-9.]/g, '');
+                                contentBuffer.push("/*" + tokenizer.token.comment[currentIndex - 1].value + "*/");
 							}
 
 							if (stack.count > 0) {
@@ -2951,6 +2961,11 @@ var generator = {
 									}
 								}
 							}
+							else if (line.tokens[j] == generator.enums.token.comment) {
+
+                                var currentIndex 	= line.values[j].replace(/[^0-9.]/g, '');
+                                contentBuffer.push("/*" + tokenizer.token.comment[currentIndex - 1].value + "*/");
+							}
 
 							if (stack.count > 0) {
 
@@ -3858,39 +3873,6 @@ var generator = {
 					var tabCountList = [];
 					var tabExtraSpace= "";
 
-					for (var i = 0; i < func.arguments.length; i++) {
-
-						var variable = "";
-						try {
-							variable = generator.refactor.getVariable(func.arguments[i]);
-						}
-						catch (searchException) {
-
-							// If ever the searchException is thrown, it means that
-							// that line inside the function is using a parameter variable
-							// it will then search on the refactor list then fetches it back to
-							// the argument list.
-
-							argumentList = generator.refactor.variableList.slice();
-							generator.refactor.variableList = tmpRefactorVariables.slice();
-							variable = generator.refactor.getVariable(func.arguments[i]);
-							argumentList.push(variable);
-							generator.refactor.variableList = argumentList.slice();
-						}
-
-						var type = variable.type;
-
-						if (type == generator.enums.c.data.type.string) {
-							type = generator.enums.c.symbol.string;
-						}
-
-						parameterString += type + " " + variable.name;
-						if (i + 1 != func.arguments.length) {
-
-							parameterString += ", ";
-						}
-					}
-
 					for (var i = 0; i < func.contains.length; i++) {
 
 						if (func.contains[i].actionStack.length < 1) {
@@ -3915,9 +3897,13 @@ var generator = {
 							action.type == generator.enums.action.basic.boolean        ||
 							action.type == generator.enums.action.return.void          ||
 							action.type == generator.enums.action.return.constant      ||
-							action.type == generator.enums.action.return.string) {
+							action.type == generator.enums.action.return.string        ||
+							action.type == generator.enums.token.comment ||
+							action.type == undefined) {
 
-							fcontent.push(generator.c.to.python.processBasicStatement(new Array(), func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language"));
+                            var tmpL = generator.c.to.python.processBasicStatement(new Array(), func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language");
+                            tmpL.comment = true;
+							fcontent.push(tmpL);
 						}
 						else if (action.type == generator.enums.action.conditionStatement) {
 
@@ -4001,6 +3987,39 @@ var generator = {
 					if (returnType == generator.enums.c.data.type.string) {
 						returnType = generator.enums.c.symbol.string;
                     }
+
+                    for (var i = 0; i < func.arguments.length; i++) {
+
+						var variable = "";
+						try {
+							variable = generator.refactor.getVariable(func.arguments[i]);
+						}
+						catch (searchException) {
+
+							// If ever the searchException is thrown, it means that
+							// that line inside the function is using a parameter variable
+							// it will then search on the refactor list then fetches it back to
+							// the argument list.
+
+							argumentList = generator.refactor.variableList.slice();
+							generator.refactor.variableList = tmpRefactorVariables.slice();
+							variable = generator.refactor.getVariable(func.arguments[i]);
+							argumentList.push(variable);
+							generator.refactor.variableList = argumentList.slice();
+						}
+
+						var type = variable.type;
+
+						if (type == generator.enums.c.data.type.string) {
+							type = generator.enums.c.symbol.string;
+						}
+
+						parameterString += type + " " + variable.name;
+						if (i + 1 != func.arguments.length) {
+
+							parameterString += ", ";
+						}
+					}
 
 					generator.functions.insert(func.name, content, returnType, parameterString);
 
@@ -4238,7 +4257,9 @@ var generator = {
 					 action.type == generator.enums.action.basic.boolean ||
 					 action.type == generator.enums.action.return.void ||
 					 action.type == generator.enums.action.return.constant ||
-					 action.type == generator.enums.action.return.string) {
+					 action.type == generator.enums.action.return.string ||
+					 action.type == generator.enums.token.comment ||
+					 action.type == undefined) {
 
 				if (definitionStack.length > 0 && definitionStack[definitionStack.length - 1].definitionType == generator.enums.definition.function) {
 
@@ -4248,6 +4269,10 @@ var generator = {
 
 					line = generator.c.to.python.processBasicStatement(buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage);
 				}
+
+				if (action.type == undefined) {
+                    line.comment = true;
+                }
 			}
 			else if (action.type == generator.enums.action.functionDefinition) {
 
@@ -4673,7 +4698,12 @@ var generator = {
 			for (var j = 0; j < buffer[i].contentStack.length; j++) {
 
 				if (!buffer[i].clauseStatement) {
-					bodyText += "\t" + tabExtraSpace + buffer[i].contentStack[j] + ";\n";
+                    if (!buffer[i].comment) {
+                        bodyText += "\t" + tabExtraSpace + buffer[i].contentStack[j] + ";\n";
+                    }
+					else {
+                        bodyText += "\t" + tabExtraSpace + buffer[i].contentStack[j] + "\n";
+					}
 				}
 				else {
 

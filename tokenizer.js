@@ -88,8 +88,8 @@ function Flag () {
 
 var tokenizer = {
 
-	type: ["Keyword", "Identifier", "Symbol", "Constant", "ReserveWord", "String"],
-	typeNick: ["kwd", "id", "symb", "const", "res", "sConst"],
+	type: ["Keyword", "Identifier", "Symbol", "Constant", "ReserveWord", "String", "Comment"],
+	typeNick: ["kwd", "id", "symb", "const", "res", "sConst", "cmnt"],
 	reset: function () {
 
 		tokenizer.tokens = [];
@@ -99,6 +99,7 @@ var tokenizer = {
 		tokenizer.token.constant = [];
 		tokenizer.token.reserveWord = [];
 		tokenizer.token.string = [];
+		tokenizer.token.comment = [];
 	},
 
 /*
@@ -117,7 +118,8 @@ var tokenizer = {
 		symbol: Array(),
 		constant: Array(),
 		reserveWord: Array(),
-		string: Array()
+		string: Array(),
+		comment: Array(),
 	},
 
 
@@ -170,6 +172,10 @@ var tokenizer = {
 
 							objId = "sConst" + (tokenizer.token.string.length + 1);
 						}
+						else if (i == 6) {
+
+                            objId = "cmnt" + (tokenizer.token.comment.length + 1);
+						}
 
 						typeIndex = i;
 						break;
@@ -195,6 +201,9 @@ var tokenizer = {
 				}
 				else if (typeIndex == 5) {
 					tokenizer.token.string.push(obj);
+				}
+				else if (typeIndex == 6) {
+                    tokenizer.token.comment.push(obj);
 				}
 			}
 
@@ -223,10 +232,18 @@ var tokenizer = {
 				"(", ")", "<", ">", "{", "}", ",", ".", "==", "!=", "<>", ":",
 				"&", "|", "[", "]"
 			],
+
 			reserveWord: ["int", "float", "str", "def", "class", "True", "False",
 				"and", "or", "not", "if", "elif", "else", "return",
 				"for", "in", "while", "break", "import", "from"
 			],
+
+            comment: {
+
+                start:      "",
+                end:        "",
+                oneLine:    "#",
+            },
 
 			add: {
 
@@ -259,6 +276,10 @@ var tokenizer = {
 			var flag = new Flag();
 			var stringTerminator = "";
 
+			var cmntString  = "";
+			var cmntFlag    = false;
+			var oneLineCmnt = false;
+
 			for (var i = 0; i < text.length; i++) {
 
 				var skip = false;
@@ -270,6 +291,28 @@ var tokenizer = {
 
 				if (text[i] == "\n") {
 					skip = true;
+				}
+
+				if (text[i] == tokenizer.python.token.comment.start) {
+                    cmntFlag = true;
+				}
+				else if (text[i] == tokenizer.python.token.comment.end) {
+                    cmntFlag = false;
+                    skip = true;
+                    var token = tokenizer.insert.token(tokenizer.type[6], cmntString);
+                    tokenBuffer += "{" + token.id + "}";
+                    cmntString = "";
+                    continue;
+				}
+
+				if (text[i] == tokenizer.python.token.comment.oneLine) {
+                    oneLineCmnt = true;
+                    continue;
+				}
+
+				if (cmntFlag == true || oneLineCmnt == true) {
+                    skip = true;
+                    cmntString += text[i];
 				}
 
 				if (!skip) {
@@ -597,6 +640,12 @@ var tokenizer = {
 						}
 					}
 
+                    if (oneLineCmnt == true) {
+                        oneLineCmnt = false;
+                        var token = tokenizer.insert.token(tokenizer.type[6], cmntString);
+                        tokenBuffer += "{" + token.id + "}";
+                        cmntString = "";
+					}
 					lines.push(tokenBuffer);
 					lineBuffer = "";
 					tokenBuffer = "";

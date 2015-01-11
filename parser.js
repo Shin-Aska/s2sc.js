@@ -318,6 +318,10 @@ var parser = {
 
 				stack[i] = tokenizer.token.reserveWord[currentIndex - 1].value;
 			}
+			else if (currentSelector == "cmnt") {
+                stack.splice(i, 1);
+                i -= 1;
+			}
 			else if (currentSelector == "tab") {
 				maxTabSlice++;
 			}
