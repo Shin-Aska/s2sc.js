@@ -7,7 +7,7 @@ var clone = {
 
 	variable: function(vari) {
 
-		return new Variable(vari.name, vari.type, vari.lineDeclared, vari.ambigious, vari.temporary);
+		return new Variable(vari.name, vari.type, vari.lineDeclared, vari.ambiguous, vari.temporary);
 	},
 
 	line: function(cLine) {
@@ -64,12 +64,46 @@ var isEquation = function(arr) {
 
 	for (var i = 0; i < n.length; i++) {
 
+        var noriginal = n[i];
 		if (dataType == "string") {
 			break;
 		}
 		try {
 
+            var isAmbigious = false;
+            if (n[i].indexOf("Value") != -1) {
+                if (n[i].indexOf("intValue") != 1) {
+                    isAmbigious = true;
+                }
+                else if (n[i].indexOf("charValue") != 1) {
+                    isAmbigious = true;
+                }
+                else if (n[i].indexOf("floatValue") != 1) {
+                    isAmbigious = true;
+                }
+                else if (n[i].indexOf("doubleValue") != 1) {
+                    isAmbigious = true;
+                }
+            }
+
+            if (isAmbigious) {
+                var sIndex = -1;
+                var eIndex = -1;
+                for (var j = 0; j < n[i].length; j++) {
+                    if (n[i][j] == "*"){
+                        sIndex = j;
+                    }
+
+                    if (n[i][j] == "."){
+                        eIndex = j;
+                        break;
+                    }
+                }
+                n[i] = (n[i].substring(sIndex + 1, eIndex));
+            }
+
 			var tmp = generator.refactor.getVariable(n[i]);
+			n[i] = noriginal;
 			if ((tmp.type == "int" || tmp.type == floatRepresentation) && (dataType != "string")) {
 
                 if (dataType == floatRepresentation && tmp.type == "int") {
@@ -88,6 +122,7 @@ var isEquation = function(arr) {
 		}
 		catch (ex) {
 
+            n[i] = noriginal;
 			var found = false;
 			for (var m = 0; m < tokenizer.token.symbol.length; m++) {
 

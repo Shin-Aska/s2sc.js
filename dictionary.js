@@ -387,7 +387,7 @@ var dictionary = {
 						try {
 							var link = generator.refactor.getVariable(parameter[i]);
 
-							if (link.ambigious) {
+							if (link.ambiguous) {
 
 								if (link.type == "int") {
 									stringFormat += "%d";
@@ -511,7 +511,7 @@ var dictionary = {
 						try {
 							var link = generator.refactor.getVariable(parameter[i]);
 
-							if (link.ambigious) {
+							if (link.ambiguous) {
 
 								if (link.type == "int") {
 									stringFormat += "%d";
@@ -522,7 +522,7 @@ var dictionary = {
 									paramFormat += "*" + link.name + ".floatValue";
 								}
 								else if (link.type == "double") {
-									stringFormat += "%Lf";
+									stringFormat += "%f";
 									paramFormat += "*" + link.name + ".doubleValue";
 								}
 								else if (link.type == "string") {
