@@ -4679,9 +4679,9 @@ var generator = {
 
 				processLoopStatement: function (buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage) {
 
+					var containerDefined = false;      // determines if the container variable is defined
 					var containerExists = false;
 					var contentFlag = false;
-					var contained = false;
 					var container = "";
 					var variable = "";
 					var content = "";
@@ -4709,15 +4709,18 @@ var generator = {
 
 							if (line.tokens[i] == generator.enums.token.identifier) {
 
-								container = line.values[i];
-								try {
+                                if (containerDefined == false) {
+                                    container = line.values[i];
+                                    containerDefined = true;
+                                    try {
 
-									variable = generator.refactor.getVariable(container);
-									containerExists = true;
-								}
-								catch (exception) {
+                                        variable = generator.refactor.getVariable(container);
+                                        containerExists = true;
+                                    }
+                                    catch (exception) {
 
-								}
+                                    }
+                                }
 							}
 							else if (line.values[i - 1] == "in") {
 
