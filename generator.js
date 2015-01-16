@@ -5589,7 +5589,7 @@ var generator = {
 			else if (action.type == generator.enums.action.import) {
 
                 // To do: Import translation here
-                alert("DOH");
+                alert("Import not currently supported yet");
 			}
 			else if (action.type == generator.enums.error.parse) {
 
@@ -5994,9 +5994,8 @@ var generator = {
 			}
 		}
 
-
 		if (errorHandler.stack.length > 0) {
-			if (generator.reparse && generator.reparseCount > 0) 
+			if (generator.reparse && generator.reparseCount > 0 || !generator.reparse) 
 				errorHandler.throwException();
 		}
 		else {

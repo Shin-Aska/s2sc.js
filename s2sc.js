@@ -30,53 +30,60 @@ var s2sc =  {
 		var count = 2;
 		var result = "";
 
-		do {
+		try {
+			do {
 
-			if (generator.reparse) {
-				generator.reparseCount++;
-			}
-
-			s2sc.clear();
-			tokenizer.reset();
-			dictionary.pages.clear();
-
-			if (generator.options.useDoubleInsteadOfFloat) {
-				generator.enums.c.data.type.float = "double";
-			}
-
-			if (originalLanguage == s2sc.language.c || targetLanguage == s2sc.language.c) {
-				dictionary.c.initialize();
-			}
-
-			if (originalLanguage == s2sc.language.python2 || targetLanguage == s2sc.language.python2) {
-				dictionary.python.initialize();
-			}
-
-			s2sc.map = tokenizer.python.tokenize(data);
-			s2sc.symbol = [];
-
-			for (var i = 0; i < s2sc.map.length; i++) {
-
-				var result = "";
-				if (s2sc.map[i].length != 0) {
-
-					result = parser.parse(s2sc.map[i]);
-				}
-				else {
-					result.symbol = "<ignore>";
-					result.valid = true;
+				if (generator.reparse) {
+					generator.reparseCount++;
 				}
 
-				result.symbol = result.symbol !== "" ? result.symbol : "<parse_error>";
-				s2sc.symbol.push(result.symbol);
-			}
+				s2sc.clear();
+				tokenizer.reset();
+				dictionary.pages.clear();
 
-			result = generator.generateCode(originalLanguage, targetLanguage, new ParseData(s2sc.map, s2sc.symbol));
-			count -= 1;
-		} while (generator.reparse && count > 0);
+				if (generator.options.useDoubleInsteadOfFloat) {
+					generator.enums.c.data.type.float = "double";
+				}
 
-		generator.reparse = false;
-		generator.reparseCount = 0;
+				if (originalLanguage == s2sc.language.c || targetLanguage == s2sc.language.c) {
+					dictionary.c.initialize();
+				}
+
+				if (originalLanguage == s2sc.language.python2 || targetLanguage == s2sc.language.python2) {
+					dictionary.python.initialize();
+				}
+
+				s2sc.map = tokenizer.python.tokenize(data);
+				s2sc.symbol = [];
+
+				for (var i = 0; i < s2sc.map.length; i++) {
+
+					var result = "";
+					if (s2sc.map[i].length != 0) {
+
+						result = parser.parse(s2sc.map[i]);
+					}
+					else {
+						result.symbol = "<ignore>";
+						result.valid = true;
+					}
+
+					result.symbol = result.symbol !== "" ? result.symbol : "<parse_error>";
+					s2sc.symbol.push(result.symbol);
+				}
+
+				result = generator.generateCode(originalLanguage, targetLanguage, new ParseData(s2sc.map, s2sc.symbol));
+				count -= 1;
+			} while (generator.reparse && count > 0);
+
+			generator.reparse = false;
+			generator.reparseCount = 0;
+		}
+		catch (exception) {
+
+			throw exception;
+		}
+
 		return result;
     },
 
