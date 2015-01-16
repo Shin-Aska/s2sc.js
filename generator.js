@@ -657,6 +657,8 @@ var generator = {
 
 		variableList: [],
 		functionList: [],
+
+		typeChangeCount: 0,
 		loopCount   : 0,
 		paramMDCount: 0, //Counts the number of parameters passed that has to be declared manually
                         //because of data type incompatibility
@@ -2801,7 +2803,7 @@ var generator = {
 						else if (line.tokens[j] == generator.enums.token.reserveWord) {
 
 							if (line.values[j] == generator.enums.c.data.type.integer ||
-								line.values[j] == generator.enums.c.data.type.float) {
+								line.values[j] == generator.enums.python.data.type.float) {
 
 								if (variable.type == 0 ||
 									variable.type != generator.enums.c.data.type.float) {
@@ -2982,6 +2984,8 @@ var generator = {
 
 					if (!isStr && legal) {
 
+						var previousVariable = "";
+
 						if (!newDeclaration) {
 
 							if (definitionStack.length > 0) {
@@ -3029,6 +3033,7 @@ var generator = {
 									}
 								}
 
+								previousVariable = generator.refactor.variableList[generator.refactor.findVariable(variable.name)];
 								generator.refactor.variableList[generator.refactor.findVariable(variable.name)] = variable;
 							}
 						}
@@ -3242,6 +3247,7 @@ var generator = {
 									if (stack.set == 0 && stack.count > 0) {
 
 										stack.count--;
+										var parseDataTypeChange = false;
 										var currentFunction = stack.functionName.pop();
 										var currentContentBuffer = stack.content.pop();
 
@@ -3262,6 +3268,31 @@ var generator = {
 										}
 
 										var operationType = isEquation(tmpEquation.join(" "));
+										try {
+
+											if (variable.name == generator.refactor.getVariable(tmpEquation.join(" ")).name) {
+												parseDataTypeChange = true;
+												operationType = previousVariable.type;
+												generator.refactor.typeChangeCount++;
+												var tmpValueHolder = clone.variable(previousVariable);
+												tmpValueHolder.ambiguous = false;
+												tmpValueHolder.name = "__tmp__valueHolder_" + previousVariable.name + generator.refactor.typeChangeCount;
+												generator.refactor.insertVariable(tmpValueHolder);
+
+												line.contentStack.unshift("strcpy(" + tmpValueHolder.name + ", " + previousVariable.name + ".charValue)");
+												line.contentStack.unshift(generator.enums.c.symbol.string + " __tmp__valueHolder_" + previousVariable.name + generator.refactor.typeChangeCount + " = ( char * ) calloc(2048, sizeof( char ) )");
+												generator.headers.insert("string.h");
+
+												for (var k = 0; k < contentBuffer.length; k++) {
+													if (contentBuffer[k] == variable.name) {
+														contentBuffer[k] = "(*" + variable.name + "." + variable.type + "Value)";
+													}
+												}
+											}
+										}
+										catch (exception) {
+
+										}
 										//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
 										if (operationType == generator.enums.c.data.type.string) {
 
@@ -3291,6 +3322,11 @@ var generator = {
 												else {
 													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
 													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.integer, 3);
+
+													if (parseDataTypeChange) {
+														currentContentBuffer.data[0] = "__tmp__valueHolder_" + previousVariable.name + generator.refactor.typeChangeCount;
+													}
+
 													result = candidate.function(currentContentBuffer.data);
 												}
 											}
@@ -3316,6 +3352,11 @@ var generator = {
 												else {
 													list = dictionary.pages.findWordsByKeywords(["string-only", "data-type-conversion", "C-language"]);
 													candidate = dictionary.search.list.byTypeAndCount(list, generator.enums.c.data.type.float, 3);
+													
+													if (parseDataTypeChange) {
+														currentContentBuffer.data[0] = "__tmp__valueHolder_" + previousVariable.name + generator.refactor.typeChangeCount;
+													}
+
 													result = candidate.function(currentContentBuffer.data);
 												}
 
@@ -3815,9 +3856,11 @@ var generator = {
 
 					if (isStr && legal) {
 
-						var lastContent = "";
 						contentBuffer = [];
+						var lastContent = "";
+						var previousVariable = "";
 						var stack = new ParenthesisStack();
+
 						variable.type = generator.enums.c.data.type.string;
 						generator.headers.insert("stdio.h");
 						generator.headers.insert("stdlib.h");
@@ -3869,6 +3912,7 @@ var generator = {
 									}
 								}
 
+								previousVariable = generator.refactor.variableList[generator.refactor.findVariable(variable.name)];
 								generator.refactor.variableList[generator.refactor.findVariable(variable.name)] = variable;
 							}
 						}
@@ -4074,6 +4118,7 @@ var generator = {
 									if (stack.set == 0 && stack.count > 0) {
 
 										stack.count--;
+										var parseDataTypeChange = false;
 										var currentFunction = stack.functionName.pop();
 										var currentContentBuffer = stack.content.pop();
 
@@ -4094,6 +4139,23 @@ var generator = {
 										}
 
 										var operationType = isEquation(tmpEquation.join(" "));
+										try {
+
+											if (variable.name == generator.refactor.getVariable(tmpEquation.join(" ")).name) {
+												parseDataTypeChange = true;
+												operationType = previousVariable.type;
+												generator.refactor.typeChangeCount++;
+												line.contentStack.unshift(previousVariable.type + " __tmp__valueHolder_" + previousVariable.name + generator.refactor.typeChangeCount + " = (*" + previousVariable.name + "." + previousVariable.type + "Value)");
+												var tmpValueHolder = clone.variable(previousVariable);
+												tmpValueHolder.ambiguous = false;
+												tmpValueHolder.name = "__tmp__valueHolder_" + previousVariable.name + generator.refactor.typeChangeCount;
+												generator.refactor.insertVariable(tmpValueHolder);
+											}
+										}
+										catch (exception) {
+
+										}
+										
 										//alert(operationType + "-" + currentFunction + " = " + currentContentBuffer.data.join(" "));
 										if (operationType == generator.enums.c.data.type.string) {
 
@@ -4263,6 +4325,9 @@ var generator = {
 											}
 											else if (currentFunction == generator.enums.python.symbol.string) {
 												result = currentContentBuffer.data.join(" ");
+												if (parseDataTypeChange) {
+													result = "__tmp__valueHolder_" + previousVariable.name + generator.refactor.typeChangeCount + "";
+												}
 											}
 											else {
 												//alert(currentContentBuffer.data.join("-"));
@@ -4511,6 +4576,9 @@ var generator = {
 
 							if (j == 0) {
 								strBuffer = contentBuffer[j];
+								if (parseDataTypeChange) {
+									strBuffer += ".charValue";
+								}
 							}
 							else {
 
@@ -5323,6 +5391,7 @@ var generator = {
 		generator.refactor.functionList = [];
 		generator.refactor.loopCount = 0;
 		generator.refactor.paramMDCount = 0;
+		generator.refactor.typeChangeCount = 0;
 
 		for (var i = 0; i < parseData.symbol.length; i++) {
 
@@ -5925,8 +5994,10 @@ var generator = {
 			}
 		}
 
-		if (errorHandler.stack.length > 0 && !generator.reparse) {
-			errorHandler.throwException();
+
+		if (errorHandler.stack.length > 0) {
+			if (generator.reparse && generator.reparseCount > 0) 
+				errorHandler.throwException();
 		}
 		else {
 
@@ -5951,4 +6022,5 @@ var generator = {
 	},
 
 	reparse: false,
+	reparseCount: 0,
 }

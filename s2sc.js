@@ -32,6 +32,10 @@ var s2sc =  {
 
 		do {
 
+			if (generator.reparse) {
+				generator.reparseCount++;
+			}
+
 			s2sc.clear();
 			tokenizer.reset();
 			dictionary.pages.clear();
@@ -72,6 +76,7 @@ var s2sc =  {
 		} while (generator.reparse && count > 0);
 
 		generator.reparse = false;
+		generator.reparseCount = 0;
 		return result;
     },
 

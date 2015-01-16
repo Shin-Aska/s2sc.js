@@ -398,7 +398,7 @@ var dictionary = {
 									paramFormat += "*" + link.name + ".floatValue";
 								}
 								else if (link.type == "double") {
-									stringFormat += "%Lf";
+									stringFormat += "%f";
 									paramFormat += "*" + link.name + ".doubleValue";
 								}
 								else if (link.type == "string") {
@@ -417,7 +417,7 @@ var dictionary = {
 									paramFormat += link.name;
 								}
 								else if (link.type == "double") {
-									stringFormat += "%Lf";
+									stringFormat += "%f";
 									paramFormat += link.name;
 								}
 								else if (link.type == "string") {
@@ -541,7 +541,7 @@ var dictionary = {
 									paramFormat += link.name;
 								}
 								else if (link.type == "double") {
-									stringFormat += "%Lf";
+									stringFormat += "%f";
 									paramFormat += link.name;
 								}
 								else if (link.type == "string") {
