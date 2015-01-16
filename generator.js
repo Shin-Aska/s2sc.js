@@ -694,9 +694,9 @@ var generator = {
 
 		insertVariable: function (variable) {
 
+            variable = clone.variable(variable);
 			var found = generator.refactor.findVariable(variable.name);
 			if (found == -1) {
-
 				generator.refactor.variableList.push(variable);
 			}
 		},
@@ -4681,7 +4681,9 @@ var generator = {
 
 					var containerDefined = false;      // determines if the container variable is defined
 					var containerExists = false;
+					var parenContained = false;
 					var contentFlag = false;
+
 					var container = "";
 					var variable = "";
 					var content = "";
@@ -4718,7 +4720,14 @@ var generator = {
                                         containerExists = true;
                                     }
                                     catch (exception) {
-
+                                    }
+                                }
+                                else {
+                                    try {
+                                        generator.refactor.getVariable(line.values[i]);
+                                    }
+                                    catch (exception) {
+                                        throw exception;
                                     }
                                 }
 							}
@@ -4741,7 +4750,7 @@ var generator = {
 
 						if (line.values[index] == generator.enums.symbol.leftParenthesis && line.values[line.values.length - 1] == generator.enums.symbol.rightParenthesis) {
 
-							contained = true;
+							parenContained = true;
 						}
 					}
 
@@ -4773,7 +4782,8 @@ var generator = {
 							}
 							else {
 
-								variable = new Variable(container, 0, -1);
+								variable = new Variable(container, 0, 0);
+								variable.type = equivKeyword.returnType;
 								var exist = false;
 
 								for (var j = 0; j < definitionStack[definitionStack.length - 1].variables.length; j++) {
@@ -4792,7 +4802,34 @@ var generator = {
 							}
 
 							equivKeyword.function([]);
-							line.contentStack.push(funcType + " " + container + "Loop = " + content.replace(keyword.name, equivKeyword.name) + ";");
+							var defined = false;
+							try {
+                                generator.refactor.getVariable(container + "Loop");
+                                defined = true;
+							}
+							catch (exception) {
+
+							}
+
+							if (defined) {
+                                line.contentStack.push(container + "Loop = " + content.replace(keyword.name, equivKeyword.name) + ";");
+							}
+							else {
+                                line.contentStack.push(funcType + " " + container + "Loop = " + content.replace(keyword.name, equivKeyword.name) + ";");
+                                var containerVariable = clone.variable(variable);
+                                containerVariable.name = container + "Loop";
+                                containerVariable.type = funcType;
+                                if (definitionStack.length > 1) {
+
+                                    for (var j = definitionStack.length - 1; j >= 0; j--) {
+                                        if (definitionStack[j].definitionType == generator.enums.definition.function) {
+                                            definitionStack[j].variables.push(containerVariable.name);
+                                        }
+                                    }
+                                }
+                                generator.refactor.insertVariable(containerVariable);
+							}
+
 							cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
 						}
 						catch (exception) {
@@ -4805,9 +4842,13 @@ var generator = {
 					else if (type == 2) {
 
 						line = generator.c.to.python.processBasicStatement(buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage);
+						if (!parenContained) {
+                            line.contentStack[0] = generator.enums.symbol.leftParenthesis + " " + line.contentStack[0] + " " + generator.enums.symbol.rightParenthesis;
+						}
 						line.contentStack[0] = "while " + line.contentStack[0];
 					}
 
+                    line.actionStack.push(action);
 					return line;
 				},
 
@@ -4992,6 +5033,10 @@ var generator = {
 
                             var tmpL = generator.c.to.python.processBasicStatement(new Array(), func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language");
                             tmpL.comment = true;
+
+							if (tmpL.contentStack.length == 0) {
+                                tmpL = func.contains[i];
+							}
 							fcontent.push(tmpL);
 						}
 						else if (action.type == generator.enums.action.conditionStatement) {
@@ -5001,6 +5046,10 @@ var generator = {
 						else if (action.type == generator.enums.action.conditionStatementClosure) {
 
 							fcontent.push(func.contains[i]);
+						}
+						else if (action.type == generator.enums.action.loopStatement) {
+
+                            fcontent.push(func.contains[i]);
 						}
 					}
 
@@ -5656,6 +5705,10 @@ var generator = {
 
 							generator.refactor.functionList.push(lastDefinition);
 							generator.reparse = true;
+							for (var j = 0; j < lastDefinition.variables.length; j++) {
+
+								generator.refactor.removeVariable(lastDefinition.variables[j]);
+							}
 						}
 						else if (lastDefinition.definitionType == generator.enums.definition.condition) {
 
