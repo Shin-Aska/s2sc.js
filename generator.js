@@ -754,7 +754,7 @@ var generator = {
 						generator.refactor.variableList[generator.refactor.findVariable(variable.name)].type = generator.enums.c.data.type.integer;
 						generator.refactor.variableList[generator.refactor.findVariable(variable.name)] = true;
 					}
-
+					
 					if (variable.ambiguous == false) {
 						var foundDeclarationLine = false;
 						try {
@@ -2783,7 +2783,9 @@ var generator = {
 							else {
 
 								try {
-									isInteger(line.values[j]);
+									variable.type = isInteger(line.values[j]) ?
+										generator.enums.c.data.type.integer :
+										generator.enums.c.data.type.float;
 								}
 								catch (exception) {
 									legal = false;
