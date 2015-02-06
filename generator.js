@@ -338,6 +338,7 @@ var generator = {
 			greaterThan: ">",
 			true: "True",
 			false: "False",
+			colon: ":"
 
         },
 
@@ -884,6 +885,7 @@ var generator = {
 
 				processBasicStatement: function (buffer, line, action, legal, definitionStack, currentLanguage, targetLanguage) {
 
+
 					line = clone.line(line);
 					var isStr = action.type == generator.enums.action.basic.stringConstant || action.type == generator.enums.action.return.string ? true : false;
 					var contentBuffer = [];
@@ -896,7 +898,6 @@ var generator = {
 					var parameterSeparated = false;
 					var override = false;
 					var hasReturnType = false;
-
 
 					for (var j = 0; j < line.tokens.length; j++) {
 
@@ -1046,6 +1047,7 @@ var generator = {
 							) {
 
 								if (isStr && !typeCasted) {
+
 									legal = false;
 								}
 							}
@@ -1095,6 +1097,7 @@ var generator = {
 						//alert(line.values + " -> " + isStr + ", " + numericVariables);
 						legal = false;
 					}
+
 
 					if (!isStr && legal) {
 
@@ -4750,6 +4753,8 @@ var generator = {
 					var containerDefined = false;      // determines if the container variable is defined
 					var containerExists = false;
 					var parenContained = false;
+					var loopEndVariable = "";
+					var beginLoopVariable = "";
 					var contentFlag = false;
 
 					var container = "";
@@ -4760,9 +4765,12 @@ var generator = {
 					var type  = 0;
 
 					line = clone.line(line);
-					line.tokens.splice(line.tokens.length - 1, 1);
-					line.values.splice(line.values.length - 1, 1);
 
+					if (line.values[line.values.length - 1] == generator.enums.symbol.colon) {
+						line.tokens.splice(line.tokens.length - 1, 1);
+						line.values.splice(line.values.length - 1, 1);
+					}
+						
 
 					for (var i = 0; i < line.values.length; i++) {
 
@@ -4805,7 +4813,16 @@ var generator = {
 							}
 
 							if (contentFlag) {
-
+								
+								if (line.tokens[i] == generator.enums.token.identifier ||
+									line.tokens[i] == generator.enums.token.constant) {
+									if (beginLoopVariable === "") {
+										beginLoopVariable = line.values[i];
+									}
+									else {
+										loopEndVariable = line.values[i];
+									}
+								}
 								content += line.values[i];
 								if (i + 1 < line.values.length) {
 									content += " ";
@@ -4813,6 +4830,7 @@ var generator = {
 							}
 						}
 					}
+
 
 					if (line.tokens[index] == generator.enums.token.symbol && line.values[index] == generator.enums.symbol.leftParenthesis) {
 
@@ -4854,16 +4872,18 @@ var generator = {
 								variable.type = equivKeyword.returnType;
 								var exist = false;
 
-								for (var j = 0; j < definitionStack[definitionStack.length - 1].variables.length; j++) {
+								if (definitionStack.length > 0) {
+									for (var j = 0; j < definitionStack[definitionStack.length - 1].variables.length; j++) {
 
-									if (definitionStack[definitionStack.length - 1].variables[j] == variable.name) {
-										insideParameter = true;
-										exist = true;
-										break;
+										if (definitionStack[definitionStack.length - 1].variables[j] == variable.name) {
+											insideParameter = true;
+											exist = true;
+											break;
+										}
 									}
 								}
 
-								if (!exist) {
+								if (!exist && definitionStack.length > 0) {
 									definitionStack[definitionStack.length - 1].variables.push(variable.name);
 								}
 								generator.refactor.insertVariable(variable);
@@ -4883,6 +4903,7 @@ var generator = {
                                 line.contentStack.push(container + "Loop = " + content.replace(keyword.name, equivKeyword.name) + ";");
 							}
 							else {
+
                                 line.contentStack.push(funcType + " " + container + "Loop = " + content.replace(keyword.name, equivKeyword.name) + ";");
                                 var containerVariable = clone.variable(variable);
                                 containerVariable.name = container + "Loop";
@@ -4898,7 +4919,8 @@ var generator = {
                                 generator.refactor.insertVariable(containerVariable);
 							}
 
-							cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
+							//cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
+							cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + " < " + loopEndVariable + "; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
 						}
 						catch (exception) {
 
@@ -5058,6 +5080,7 @@ var generator = {
 
 					}
 
+
 					generator.refactor.variableList = parameterVariables.slice();
 
 
@@ -5117,8 +5140,12 @@ var generator = {
 						}
 						else if (action.type == generator.enums.action.loopStatement) {
 
-                            fcontent.push(func.contains[i]);
+							var cLine = generator.c.to.python.processLoopStatement(new Array(), func.contains[i], func.contains[i].actionStack[0], true, new Array(), "Python-language", "C-language");
+							cLine.contentStack[1] += " {";
+                            fcontent.push(cLine);
 						}
+
+
 					}
 
 					for (var i = 0; i < fcontent.length; i++) {
@@ -5186,7 +5213,17 @@ var generator = {
 								for (var k = 0; k < tabLength; k++) {
 									tabExtraSpace += "\t";
 								}
-								content += tabSpace + tabExtraSpace + fcontent[i].contentStack[j] + ";\n";
+
+								if (fcontent[i].contentStack[j][fcontent[i].contentStack[j].length - 1] != "{" &&
+									fcontent[i].contentStack[j][fcontent[i].contentStack[j].length - 1] != ";") 
+									content += tabSpace + tabExtraSpace + fcontent[i].contentStack[j] + ";\n";
+								else {
+									content += tabSpace + tabExtraSpace + fcontent[i].contentStack[j] + "\n";
+									if (fcontent[i].contentStack[j][fcontent[i].contentStack[j].length - 1] != ";") {
+
+										tabCountList.push(1);
+									}
+								}
 							}
 
 						}
@@ -5675,7 +5712,6 @@ var generator = {
 						}
 
 						for (var j = 0; j < lastDefinition.variables.length; j++) {
-
                             generator.refactor.removeVariable(lastDefinition.variables[j]);
 						}
                     }
@@ -5745,7 +5781,6 @@ var generator = {
 						else {
 							buffer.push(tmpCopyLine);
 						}
-
 						for (var j = 0; j < lastDefinition.variables.length; j++) {
 
 							generator.refactor.removeVariable(lastDefinition.variables[j]);
@@ -5917,7 +5952,6 @@ var generator = {
 							}
 
 							for (var j = 0; j < lastDefinition.variables.length; j++) {
-
 								generator.refactor.removeVariable(lastDefinition.variables[j]);
 							}
 						}
