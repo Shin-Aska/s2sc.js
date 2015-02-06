@@ -103,7 +103,7 @@ $( document ).ready(function() {
 					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber + "<br>" + consolehandler.showParsingInformation(map) + "</body></html>");
 				}
 				else {
-					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + " [File and Line stack trace only available on Firefox]" + "<br>" + consolehandler.showParsingInformation(map) + "</body></html>");
+					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + " [No stack trace available for this error]" + "<br>" + consolehandler.showParsingInformation(map) + "</body></html>");
 				}
 
 				document.getElementById('output').value = "";
