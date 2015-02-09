@@ -148,6 +148,8 @@ function tmpDefinitionState (TfuncName, TfuncArgs, TfuncIndention, TfuncLines, T
     this.definitionType = Ttype;
     this.variables = _variables;
     this.original = new Array();
+
+    this._varList = new Array();
 }
 
 // Parsed Data that that is consolidated
@@ -4948,7 +4950,6 @@ var generator = {
 
 					var argumentNameList = [];
 					var tmpRefactorVariables = generator.refactor.variableList.slice();
-                    var variableReferences = func.variables;
                     var returnType = "void";
                     var parameterString = "";
                     var tabSpace = "";
@@ -5395,7 +5396,8 @@ var generator = {
 							return this.name + "(" + parameterString + ")";
 						}
 					, new Array("user-defined", func.name, "C-language"), returnType));
-
+					
+					func._varList = generator.refactor.variableList;
 					result = dictionary.pages.findWord(func.name, "C-language");
 					generator.refactor.variableList = tmpRefactorVariables.slice();
 					return result;

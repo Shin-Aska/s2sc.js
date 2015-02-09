@@ -2,7 +2,7 @@
 <!-- Sample -->
 <html>
 <head>
-	<title>s2sc Python(2.7) to C Conversion Sample</title>
+	<title>Sample application where s2sc is integrated</title>
 
 	<!-- The s2sc.js files -->
 	<script src="utility.js"></script>
@@ -14,34 +14,101 @@
 	<script src="s2sc.js"></script>
 	<!-- ends here -->
 
-	<script src="jquery/jquery-1.9.1.js"></script>
+	<script src="jquery/jquery.js"></script>
+	<script src="jquery/jquery-ui.custom.js" type="text/javascript"></script>
 	<script src="edit_area/edit_area_full.js"></script>
 	<script src="consolehandler.js"></script>
 	<script src="application.js"></script>
+
+	<!-- Superfish & Super subs-->
+	<script src="superfish/js/hoverIntent.js"></script>
+	<script src="superfish/js/superfish.js"></script>
+	<script src="superfish/js/supersubs.js"></script>
+
+	<!-- Tree List-->
+
+	<link href="fancytree/skin-win8/ui.fancytree.css" rel="stylesheet" type="text/css">
+	<script src="fancytree/jquery.fancytree.js" type="text/javascript"></script>
+
+	<link href="prettify/prettify.css" rel="stylesheet">
+	<script src="prettify/prettify.js" type="text/javascript"></script>
+
+	<!-- -->
+
 	<link rel="stylesheet" type="text/css" href="display.css">
 	<link rel="stylesheet" type="text/css" href="jquery/themes/base/jquery-ui.css">
+	<link rel="stylesheet" media="screen" href="superfish/css/superfish.css">
 </head>
 	<body>
-		<h1>s2sc Python(2.7) to C Conversion Sample</h1>
-		<p>Select File: <input type="text" id="fileName" disabled> <input type="button" value="Convert" id="convertButton">
-			<input type="file" id="chosenFile">
+
+		<ul class="sf-menu" id="menubar">
+			<li>
+				<a>File</a>
+				<ul>
+					<li>Open<input display="cursor: pointer;" type="file" id="chosenFile"></li>
+				</ul>
+			</li>
+			<li>
+				<a>Convert</a>
+				<ul>
+					<li>Convert Python 3
+						<ul>
+							<li id="convertButton">> C</li>
+						</ul>
+					</li>
+				</ul>
+			</li>
+			<li>
+				<a>Preferences</a>
+				<ul>
+					<li>Editor</li>
+					<li>C Config</li>
+					<li>Python Config</li>
+					<li>S2SC</li>
+				</ul>
+			</li>
+			<li>
+				<a>Help</a>
+				<ul>
+					<li>Documentation</li>
+					<li>How to Compile</li>
+					<li>Visit our Github Page</li>
+				</ul>
+			</li>
+		</ul>
+
+		<div id="menuframe">
+		</div>
+
+		<br><br>
+
+		<p style="display: none">Select File: <input type="text" id="fileName" disabled> <input type="button" value="Convert" >
+				
 		</p>
-		<hr>
+
 		<table class="header">
 			<tr>
 				<td>
-					Python
+					Input
 				</td>
 				<td>
-					C
+					&nbsp&nbsp Output
+				</td>
+				<td>
+					&nbsp&nbsp&nbsp&nbsp&nbsp Function
 				</td>
 			</tr>
 		</table>
 		<div class="wrapper">
 			<textarea id="inputText"></textarea>
 			<textarea id="output">Output here will be generated once you click the [convert] button</textarea>
+			<div id="functionList">
+			</div>
 		</div>
-		Console: <br>
-		<iframe id='console'>
+
+		<div id="consoleContainer">
+			<table class="header"><tr><td>Console:</td></tr></table>
+			<iframe id='console'>
+		</div>
 	</body>
 </html>

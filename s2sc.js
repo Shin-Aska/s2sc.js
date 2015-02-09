@@ -18,6 +18,7 @@ var s2sc =  {
 
 	map: null,
 	symbol: null,
+	process: false,
 
 	clear: function() {
 
@@ -83,8 +84,38 @@ var s2sc =  {
 
 			throw exception;
 		}
-
+		s2sc.process = true;
 		return result;
+    },
+
+    list: {
+
+    	variables: function() {
+
+    		if (!s2sc.process) {
+    			return;
+    		}
+
+    		var global = new Array();
+    		var reference = generator.refactor.variableList;
+    		for (var i = 0; i < reference.length; i++) {
+    			if (!reference[i].temporary) {
+    				global.push(reference[i]);
+    			}
+    		}
+
+    		return global;
+    	},
+
+    	functions: function() {
+
+    		if (!s2sc.process) {
+    			return;
+    		}
+
+    		var functionList = generator.refactor.functionList.slice();
+    		return functionList;
+    	}
     },
 
     language: {

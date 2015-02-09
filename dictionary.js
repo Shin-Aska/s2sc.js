@@ -358,13 +358,13 @@ var dictionary = {
 						floatWord = "double";
 					}
 
-					/*if (buffer.search("charValue") != -1) {
+					for (var i = 0; i < parameter.length; i++) {
 
-						var variable = parameter[i].replace("(", "");
-						variable     = variable.replace(")", "");
-						variable     = variable.replace(RegExp('\\b' + ".charValue" + '\\b','g'), "");
-						alert(variable);
-					}*/
+						if (parameter[i] == generator.enums.symbol.add) {
+							parameter.splice(i, 1);
+							i--;
+						}
+					}
 
 					for (var i = 0; i < parameter.length; i++) {
 
@@ -488,7 +488,13 @@ var dictionary = {
 						floatWord = "double";
 					}
 
+					for (var i = 0; i < parameter.length; i++) {
 
+						if (parameter[i] == generator.enums.symbol.add) {
+							parameter.splice(i, 1);
+							i--;
+						}
+					}
 
 					for (var i = 0; i < parameter.length; i++) {
 

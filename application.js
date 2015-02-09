@@ -9,6 +9,8 @@
  *
  * 1. JQuery (http://jquery.com/)
  * 2. EditArea (http://www.cdolivet.com/editarea/)
+ * 3. Superfish (users.tpg.com.au/j_birch/plugins/superfish)
+ * 4. FancyTree (https://github.com/mar10/fancytree)
  *
  * Further-more it needs the following libraries/tools for the codes it generates in order for it to run/compile
  *
@@ -110,6 +112,44 @@ $( document ).ready(function() {
 				editAreaLoader.setValue("output", "");
 			}
 		}
+
+		var variables = s2sc.list.variables();
+		var functions = s2sc.list.functions();
+		var lastFunc = 0;
+
+		var tree = new Array();
+
+		for (var i = 0; i < functions.length; i++) {
+			var currentFunction = {title: functions[i].name, key: (i + 1), folder: true, children: []};
+			var funcInfo = dictionary.pages.findWord(currentFunction.title, "C-language");
+
+			for (var j = 0; j < functions[i]._varList.length; j++) {
+				if (!functions[i]._varList[j].temporary) {
+					var cVar = functions[i]._varList[j];
+					currentFunction.children.push({title: cVar.name + ": " + cVar.type, key: 0});
+				}
+			}
+			currentFunction.title += "(";
+			for (var j = 0; j < functions[i].arguments.length; j++) {
+
+				currentFunction.title += functions[i].arguments[j];
+				if (j + 1 != functions[i].arguments.length) {
+					currentFunction.title += ", ";
+				}
+			}
+			currentFunction.title += "): " + funcInfo.returnType;
+			tree.push(currentFunction);
+			lastFunc = i + 1;
+		}
+
+		for (var i = 0; i < variables.length; i++) {
+
+			var cVar = {title: variables[i].name, key: (i + 1 + lastFunc)};
+			cVar.title += ": " + variables[i].type;
+			tree.push(cVar);
+		}
+
+		$("#functionList").fancytree("getTree").reload(tree);
 	});
 
 	editAreaLoader.init({
@@ -134,8 +174,50 @@ $( document ).ready(function() {
 	});
 
 	setTimeout(function(){
-		$("#frame_inputText").width("48.3%")
-		$("#frame_output").width("48.3%");
+		$("#frame_inputText").width("39%")
+		$("#frame_output").width("39%");
 	}, 1000);
+
+	var menu = $('#menubar').superfish({
+					//add options here if required
+				});
+
+
+	$("#functionList").fancytree({
+
+		activate: function(event, data) {
+			$("#echoActive").text(data.node.title);
+//              alert(node.getKeyPath());
+			if( data.node.url )
+				window.open(data.node.url, data.node.target);
+		},
+		deactivate: function(event, data) {
+			$("#echoSelected").text("-");
+		},
+		focus: function(event, data) {
+			$("#echoFocused").text(data.node.title);
+		},
+		blur: function(event, data) {
+			$("#echoFocused").text("-");
+		},
+		lazyLoad: function(event, data){
+			// Simulate a slow ajax request
+			var dfd = new $.Deferred()
+			data.result = dfd;
+			window.setTimeout(function(){
+				dfd.resolve([
+					{ title: 'Lazy node 1', lazy: true },
+					{ title: 'Simple node 2', select: true }
+				]);
+			}, 1500);
+		},
+		source: [
+
+		]
+
+	});
+
+	
+
 });
 // @license-end

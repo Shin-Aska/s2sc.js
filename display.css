@@ -1,3 +1,76 @@
+
+/*
+	For the Menubar
+*/
+
+#menubar {
+	margin: 0px;
+	margin-top: -8px;
+	margin-left: -7px;
+}
+
+#menubar ul {
+	border: 0px;
+	background-color: #272822;
+}
+
+#menubar a {
+	font-family: Arial;
+	font-size: 11pt;
+	margin: 0px;
+    height: 10px;
+    line-height: 10px;
+    background-color: #272822;
+    color: white;
+    cursor: pointer;
+}
+
+#menubar li:hover, #menubar li.sfHover {
+	background-color: #A5A5A5;
+}
+
+#menubar ul li {
+
+	font-family: Arial;
+	padding: 4px;
+	background-color: #272822;
+	color: white;
+	cursor: pointer;
+}
+
+#menuframe {
+
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 34px;
+	float: left;
+	background-color: #272822;
+	z-index: -999;
+}
+
+/*
+	For the function list
+*/
+
+#functionList {
+
+	width: 20%;
+	height: 700px;
+	resize: none;
+	margin-left: 8px;
+	float: left;
+}
+
+ul.fancytree-container {
+ 	height: 690px;
+	width: 100%;
+}
+
+/*
+	Everything else
+*/
 body {
 
 	background-color: #E0DEDC;
@@ -11,7 +84,7 @@ body {
 
 #inputText {
 
-	width: 48%;
+	width: 39%;
 	height: 700px;
 	resize: none;
 	border: 1px solid black;
@@ -23,12 +96,19 @@ body {
 
 #output {
 
-	width: 48%;
+	width: 39%;
 	height: 700px;
 	resize: none;
 	border: 1px solid black;
 	margin-left: 8px;
 	float: left;
+}
+
+#chosenFile {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	opacity: 0;
 }
 
 #frame_inputText {
@@ -48,7 +128,7 @@ body {
 #console {
 
 	background-color: white;
-	width: 97%;
+	width: 99%;
 	height: 400px;
 	resize: none;
 	border: 1px solid black;
@@ -62,7 +142,8 @@ body {
 .header td {
 
 	width: 40%;
-	font-size: 20pt;
+	font-size: 11pt;
+	font-family: Arial;
 	font-weight: bolder;
 }
 

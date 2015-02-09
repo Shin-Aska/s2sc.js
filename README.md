@@ -3,7 +3,7 @@ s2sc.js
 
 Programming Language Converter for Javascript
 
-![alt tag](http://i.imgur.com/fcwJueC.png)
+![alt tag](http://i.imgur.com/G4yRTvN.png)
 
 **s2sc** (*Source to Source Converter*) is a javascript code convertion framework
 that aims to connect other programming languages to web browsers by interpreting
