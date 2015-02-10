@@ -74,11 +74,13 @@ ul.fancytree-container {
 body {
 
 	background-color: #E0DEDC;
+	min-height: 720px;
+	min-width: 1024px;
 }
 
 .wrapper {
 
-	width: 100%;
+	width: 99.8%;
 	height: 720px;
 }
 
