@@ -67,6 +67,7 @@ var isEquation = function(arr, language) {
 		funcRepresentation2 = "toString_float";
 	}
 
+	console.log(n);
 	for (var i = 0; i < n.length; i++) {
 
         var noriginal = n[i];
@@ -168,7 +169,10 @@ var isEquation = function(arr, language) {
 						
 					}
 					catch (ex3) {
-						dataType = "string";
+						var index = n[i].indexOf(")");
+						if (index == -1) {
+							dataType = "string";
+						}
 					}						
 				}
 			}
