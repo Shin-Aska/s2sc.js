@@ -40,11 +40,16 @@ var isInteger = function(n) {
     return false;
 }
 
-var isEquation = function(arr) {
+var isEquation = function(arr, language) {
 
 	if (arr.length == 0) {
 		return "";
 	}
+
+	if (typeof(language) === "undefined") {
+		language = s2sc.default.targetLanguage;
+	}
+
 	var dataType = "";
 	var n = arr.split(" ");
 	var funcTypeParsing = false;
@@ -145,36 +150,26 @@ var isEquation = function(arr) {
 				}
 				catch (ex2) {
 
-					var cFuncNames = ["toInteger_str", funcRepresentation1, "toString_int", funcRepresentation2, "true", "false", "True", "False"];
-					var cFuncDType = ["int", floatRepresentation, "string", "string", "int", "int", "int", "int"];
-					var cFuncIndex = [-1, -1, -1, -1, -1, -1, -1, -1];
-					var candidateIndex = -1;
+					try {
 
-					for (var j = 0; j < 8; j++) {
-						cFuncIndex[j] = n[i].search(cFuncNames[j]);
-					}
-
-					for (var j = 0; j < 8; j++) {
-
-						if (candidateIndex == -1) {
-							candidateIndex = j;
+						var found = false;
+						var funcList = dictionary.pages.findWordsByKeywords(Array(language));
+						for (var l = 0; l < funcList.length; l++) {
+							var index = n[i].search(funcList[l].name);
+							if (index != -1) {
+								found = true;
+								dataType = dictionary.pages.word[funcList[l].index].returnType;
+							}
 						}
 
-						if (cFuncIndex[j] != -1 && (cFuncIndex[candidateIndex] > cFuncIndex[j] || cFuncIndex[candidateIndex] == -1)) {
-
-							candidateIndex = j;
+						if (!found) {
+							throw n[i] + " is string";
 						}
+						
 					}
-
-					if (candidateIndex == -1 || cFuncIndex[candidateIndex] == -1) {
-
+					catch (ex3) {
 						dataType = "string";
-					}
-					else {
-
-						dataType = cFuncDType[candidateIndex];
-					}
-					//dataType = "string";
+					}						
 				}
 			}
 		}

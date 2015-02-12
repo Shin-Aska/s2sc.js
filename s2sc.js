@@ -30,6 +30,8 @@ var s2sc =  {
 
 		var count = 2;
 		var result = "";
+		s2sc.default.targetLanguage = targetLanguage;
+		s2sc.default.originalLanguage = originalLanguage;
 
 		try {
 			do {
@@ -82,10 +84,21 @@ var s2sc =  {
 		}
 		catch (exception) {
 
+			s2sc.default.targetLanguage = "";
+			s2sc.default.originalLanguage = "";
 			throw exception;
 		}
+
+		s2sc.default.targetLanguage = "";
+		s2sc.default.originalLanguage = "";
 		s2sc.process = true;
 		return result;
+    },
+
+    default: {
+
+    	targetLanguage: "",
+    	originalLanguage: ""
     },
 
     list: {

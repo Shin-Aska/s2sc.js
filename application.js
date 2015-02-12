@@ -120,26 +120,32 @@ $( document ).ready(function() {
 		var tree = new Array();
 
 		for (var i = 0; i < functions.length; i++) {
-			var currentFunction = {title: functions[i].name, key: (i + 1), folder: true, children: []};
-			var funcInfo = dictionary.pages.findWord(currentFunction.title, "C-language");
 
-			for (var j = 0; j < functions[i]._varList.length; j++) {
-				if (!functions[i]._varList[j].temporary) {
-					var cVar = functions[i]._varList[j];
-					currentFunction.children.push({title: cVar.name + ": " + cVar.type, key: 0});
-				}
-			}
-			currentFunction.title += "(";
-			for (var j = 0; j < functions[i].arguments.length; j++) {
+			try {
+				var currentFunction = {title: functions[i].name, key: (i + 1), folder: true, children: []};
+				var funcInfo = dictionary.pages.findWord(currentFunction.title, "C-language");
 
-				currentFunction.title += functions[i].arguments[j];
-				if (j + 1 != functions[i].arguments.length) {
-					currentFunction.title += ", ";
+				for (var j = 0; j < functions[i]._varList.length; j++) {
+					if (!functions[i]._varList[j].temporary) {
+						var cVar = functions[i]._varList[j];
+						currentFunction.children.push({title: cVar.name + ": " + cVar.type, key: 0});
+					}
 				}
+				currentFunction.title += "(";
+				for (var j = 0; j < functions[i].arguments.length; j++) {
+
+					currentFunction.title += functions[i].arguments[j];
+					if (j + 1 != functions[i].arguments.length) {
+						currentFunction.title += ", ";
+					}
+				}
+				currentFunction.title += "): " + funcInfo.returnType;
+				tree.push(currentFunction);
+				lastFunc = i + 1;
 			}
-			currentFunction.title += "): " + funcInfo.returnType;
-			tree.push(currentFunction);
-			lastFunc = i + 1;
+			catch (ex) {
+				
+			}
 		}
 
 		for (var i = 0; i < variables.length; i++) {
