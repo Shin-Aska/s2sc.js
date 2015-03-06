@@ -56,15 +56,19 @@ var s2sc =  {
 					dictionary.python.initialize();
 				}
 
-				s2sc.map = tokenizer.python.tokenize(data);
+				s2sc.map = null;
 				s2sc.symbol = [];
+
+				if (originalLanguage == s2sc.language.python2 || s2sc.language.python3) {
+					s2sc.map = tokenizer.python.tokenize(data);
+				}
 
 				for (var i = 0; i < s2sc.map.length; i++) {
 
 					var result = "";
-					if (s2sc.map[i].length != 0) {
 
-						result = parser.parse(s2sc.map[i]);
+					if (s2sc.map[i].length != 0) {
+						result = parser.parse(s2sc.map[i], originalLanguage);
 					}
 					else {
 						result.symbol = "<ignore>";

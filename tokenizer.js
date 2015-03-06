@@ -223,8 +223,7 @@ var tokenizer = {
 		token: {
 
 			keyword: [
-				"print", "raw_input",
-				"testFunc", "pow", "range"
+				"print", "raw_input", "pow", "range"
 			],
 			symbol: [
 				"->", "+=", "-=", "*=", "/=", "+", "=",

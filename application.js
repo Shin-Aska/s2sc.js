@@ -18,7 +18,63 @@
  * 2. GNU Compiler Collection (https://gcc.gnu.org/)
  */
 
+var updateShortcut = function() {
+
+	var shortcuts = JSON.parse(localStorage["shortcuts"]);
+	var shortcuts_str = "";
+	for (var i = 0; i < shortcuts.length; i++) {
+		shortcuts_str += '<div id="' + shortcuts[i].id +'" class="shortcutButton"><p></p></div>';
+	}
+
+	$("#shortcutbar").html(shortcuts_str);
+
+	for (var i = 0; i < shortcuts.length; i++) {
+		var f = "$('" + shortcuts[i].functionTarget + "').click()";
+		$("#" + shortcuts[i].id).on("click", function(){
+			eval(f);
+		});
+		//document.getElementById().onclick = eval("alert('@@@')");
+	}
+}
+
 $( document ).ready(function() {
+
+	/*try {
+		$( "#tokenizerWindow" ).dialog("open")
+	}
+	catch (exception) {
+		console.log(exception);
+	}*/
+
+	$("#parserSelector").on("click", function(){
+		$( "#parserWindow" ).dialog("open")
+	});
+
+	$("#tokenizerSelector").on("click", function(){
+		$( "#tokenizerWindow" ).dialog("open")
+	});
+
+	$("#dictionarySelector").on("click", function(){
+		$( "#dictionaryWindow" ).dialog("open")
+	});
+
+
+	$("#editorSelector").on("click", function(){
+		$( "#editorWindow" ).dialog("open")
+	});
+
+	$("#cConfigSelector").on("click", function(){
+		$( "#C-ConfigWindow" ).dialog("open")
+	});
+
+	$("#pythonConfigSelector").on("click", function(){
+		$( "#Python-ConfigWindow" ).dialog("open")
+	});
+
+	$("#s2scSelector").on("click", function(){
+		$( "#S2SCWindow" ).dialog("open")
+	});
+	
 
 	var textareas = document.getElementsByTagName('textarea');
 	var count = textareas.length;
@@ -92,7 +148,7 @@ $( document ).ready(function() {
 				}
 				resultant += "</table>";
 				resultant += "<hr>";
-				$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + resultant + consolehandler.showParsingInformation(map));
+				$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + resultant + consolehandler.showParsingInformation(map, "Python-language"));
 
 				document.getElementById('output').value = result;
 				editAreaLoader.setValue("output", result);
@@ -102,10 +158,10 @@ $( document ).ready(function() {
 				var map = s2sc.map;
 
 				if (typeof(exception.fileName) !== "undefined") {
-					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber + "<br>" + consolehandler.showParsingInformation(map) + "</body></html>");
+					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber + "<br>" + consolehandler.showParsingInformation(map, "Python-language") + "</body></html>");
 				}
 				else {
-					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + " [No stack trace available for this error]" + "<br>" + consolehandler.showParsingInformation(map) + "</body></html>");
+					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + " [No stack trace available for this error]" + "<br>" + consolehandler.showParsingInformation(map, "Python-language") + "</body></html>");
 				}
 
 				document.getElementById('output').value = "";
@@ -161,28 +217,106 @@ $( document ).ready(function() {
 	editAreaLoader.init({
 		id: "inputText"
 		,start_highlight: true
-		,allow_resize: "x"
-		,allow_toggle: true
 		,word_wrap: false
 		,language: "en"
 		,syntax: "python"
+		,allow_resize: "no"
+		,toolbar: "search,go_to_line,undo,redo,separator,word_wrap,syntax_selection"
 	});
 
 	editAreaLoader.init({
 		id: "output"
 		,start_highlight: true
-		,allow_resize: "x"
-		,allow_toggle: true
 		,word_wrap: false
 		,language: "en"
 		,syntax: "c"
 		,is_editable: false
+		,allow_resize: "no"
 	});
 
 	setTimeout(function(){
-		$("#frame_inputText").width("39%")
+		$("#frame_inputText").width("39%");
 		$("#frame_output").width("39%");
-	}, 1000);
+	
+	}, 500);
+
+	window.onresize = function() {
+		setTimeout(function(){
+			$("#frame_inputText").height("98%");	
+			$("#frame_output").height("98%");
+		}, 300);
+
+		if (parseInt($("body").height()) <= 800) {
+			$("#consoleContainer").height("33%");
+		}
+		else if (parseInt($("body").height()) <= 1000) {
+			$("#consoleContainer").height("35%");
+		}
+		else  {
+			$("#consoleContainer").height("37%");
+		}
+
+		if (parseInt($("body").width()) >= 1900) {
+			$("#console").width("99.6%");
+			$(".wrapper").width("100.4%");
+		}
+		else if (parseInt($("body").width()) >= 1500) {
+			$("#console").width("99.6%");
+			$(".wrapper").width("100.2%");
+		}
+		else if (parseInt($("body").width()) >= 1300) {
+			$("#console").width("99.4%");
+			$(".wrapper").width("99.8%");
+		}
+		else if (parseInt($("body").width()) >= 1100) {
+			$("#console").width("99.6%");
+			$(".wrapper").width("99.8%");
+		}
+		else if (parseInt($("body").width()) >= 1000) {
+			$("#console").width("99.8%");
+			$(".wrapper").width("99.8%");
+		}
+	};
+
+	window.onscroll = function() {
+		setTimeout(function(){
+			$("#frame_inputText").height("98%");	
+			$("#frame_output").height("98%");
+		}, 300);
+
+		if (parseInt($("body").height()) <= 800) {
+			$("#consoleContainer").height("33%");
+		}
+		else if (parseInt($("body").height()) <= 1000) {
+			$("#consoleContainer").height("35%");
+		}
+		else  {
+			$("#consoleContainer").height("37%");
+		}
+
+		if (parseInt($("body").width()) >= 1900) {
+			$("#console").width("99.6%");
+			$(".wrapper").width("100.4%");
+		}
+		else if (parseInt($("body").width()) >= 1500) {
+			$("#console").width("99.6%");
+			$(".wrapper").width("100.2%");
+		}
+		else if (parseInt($("body").width()) >= 1300) {
+			$("#console").width("99.4%");
+			$(".wrapper").width("99.8%");
+		}
+		else if (parseInt($("body").width()) >= 1100) {
+			$("#console").width("99.6%");
+			$(".wrapper").width("99.8%");
+		}
+		else if (parseInt($("body").width()) >= 1000) {
+			$("#console").width("99.8%");
+			$(".wrapper").width("99.8%");
+		}
+	};
+
+	window.onscroll();
 
 	var menu = $('#menubar').superfish({
 					//add options here if required
@@ -191,39 +325,16 @@ $( document ).ready(function() {
 
 	$("#functionList").fancytree({
 
-		activate: function(event, data) {
-			$("#echoActive").text(data.node.title);
-//              alert(node.getKeyPath());
-			if( data.node.url )
-				window.open(data.node.url, data.node.target);
-		},
-		deactivate: function(event, data) {
-			$("#echoSelected").text("-");
-		},
-		focus: function(event, data) {
-			$("#echoFocused").text(data.node.title);
-		},
-		blur: function(event, data) {
-			$("#echoFocused").text("-");
-		},
-		lazyLoad: function(event, data){
-			// Simulate a slow ajax request
-			var dfd = new $.Deferred()
-			data.result = dfd;
-			window.setTimeout(function(){
-				dfd.resolve([
-					{ title: 'Lazy node 1', lazy: true },
-					{ title: 'Simple node 2', select: true }
-				]);
-			}, 1500);
-		},
 		source: [
 
 		]
 
 	});
 
-	
+	updateShortcut()
 
+	$('.buttonContainer .draggable-list').sortable({
+	connectWith: '.buttonContainer .draggable-list'
+	});
 });
 // @license-end

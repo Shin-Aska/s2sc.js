@@ -5,7 +5,7 @@ var consolehandler = {
 	console: null,
 	debug: true,
 
-	showParsingInformation: function(map) {
+	showParsingInformation: function(map, language) {
 
 		var string = "";
 
@@ -13,7 +13,7 @@ var consolehandler = {
 
 			var result = "";
 			if (map[i].length != 0) {
-				result = parser.parse(map[i]);
+				result = parser.parse(map[i], language);
 			}
 			else {
 				result = "<ignore>";

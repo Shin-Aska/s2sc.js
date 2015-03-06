@@ -23,6 +23,8 @@
     background-color: #272822;
     color: white;
     cursor: pointer;
+    border: 0px;
+    border-right: 1px solid white;
 }
 
 #menubar li:hover, #menubar li.sfHover {
@@ -48,6 +50,40 @@
 	float: left;
 	background-color: #272822;
 	z-index: -999;
+	min-width: 1035px;
+}
+
+/*
+	For the shortcut bar
+*/
+
+#shortcutbar {
+	width: 100.6%;
+	min-width: 1035px;
+	height: 40px;
+	float: left;
+	background-color: white;
+	border-bottom: 1px solid rgba(0, 0, 0, .4);
+	z-index: -999;
+	margin-top: 2px;
+	margin-left: -5px;
+}
+
+.shortcutButton {
+	width: 30px;
+	height: 30px;
+	border: 1px solid black;
+	display: inline-block;
+	margin-top: 4px;
+	margin-left: 5px;
+}
+
+.shortcutButton:first-child {
+	margin-left: 5px;
+}
+
+.shortcutButton:hover {
+	opacity: 0.4;
 }
 
 /*
@@ -57,37 +93,226 @@
 #functionList {
 
 	width: 20%;
-	height: 700px;
+	height: 100%;
 	resize: none;
 	margin-left: 8px;
 	float: left;
 }
 
-ul.fancytree-container {
- 	height: 690px;
+#functionList > ul.fancytree-container {
+ 	height: 96%;
 	width: 100%;
 }
+
+/* 
+	Toolbar
+*/
+
+#compileCtoPython {
+	background: url(images/compiler.png);
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+#parserConfig {
+	background: url(images/settings.png);
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+#tokenizerConfig {
+	background: url(images/token.png);
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+#dictionaryConfig {
+	background: url(images/dictionary.png);
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	background-repeat: no-repeat;
+	background-position: center center;
+}
+
+/*End*/
+
+/*
+	Window
+*/
+
+.window-desc {
+
+	margin: 0px;
+	font-size: 8pt;
+	font-family: Arial;
+	font-weight: bolder;
+}
+
+.windowSelectionButton {
+
+	font-size: 9pt !important;
+	font-family: Arial;
+	margin-top: 5px;
+}
+
+.windowText {
+
+	font-size: 11pt;
+	font-family: Arial;
+	display: inline-block;
+}
+
+.allWidth {
+
+	width: 100%;
+}
+
+.minify {
+
+	font-size: 11pt !important;
+}
+
+/*parser-setting.js*/
+
+	#parserList > ul.fancytree-container {
+	 	height: 92%;
+		width: 48%;
+		float: left;
+	}
+
+	#grammarList > ul.fancytree-container {
+	 	height: 84%;
+		width: 48%;
+		float: left;
+		margin-left: 5px;
+	}
+
+	#languageList > ul.fancytree-container {
+	 	height: 92%;
+		width: 48%;
+		float: left;
+	}
+
+	#tokenList > ul.fancytree-container {
+	 	height: 84%;
+		width: 48%;
+		float: left;
+		margin-left: 5px;
+	}
+
+	#supportedLanguageList > ul.fancytree-container {
+	 	height: 92%;
+		width: 28%;
+		float: left;
+	}
+
+	#functionCode {
+		height: 93%;
+		width: 37%;
+		margin-left: 5px;
+		font-size: 9pt;
+		font-family: monospace;
+		overflow: auto !important;
+		word-wrap: none;
+		resize: none;
+	}
+
+	#frame_functionCode {
+		width: 37% !important;
+		height: 92% !important;
+		margin-left: 5px;
+		margin-bottom: 0px;
+	}
+
+	#dictionaryFunctionList > ul.fancytree-container {
+	 	height: 92%;
+		width: 28%;
+		float: left;
+		margin-left: 5px;
+	}
+
+	#EditAreaArroundInfos_functionCode {
+
+		display: none;
+	}
+	
+/*end*/
+
+/*Editor Preference*/
+
+.buttonContainer {
+	width: 100%;
+}
+
+.draggable-list {
+	border: 1px solid rgba(0, 0, 0, .4);
+	list-style: none;
+	margin: 0;
+	min-height: 70px;
+	padding: 10px;
+}
+
+.draggable-item {
+	display: inline-block;
+	width: 80px;
+	height: 50px;
+	background-color: #FFF;
+	border: 1px dotted #000;
+	cursor: move;
+	font-weight: bold;
+	color:#CC0033;
+	margin: 20px;
+}
+
+.draggable-item > p {
+	color: black;
+	font-size: 8pt;
+	position: absolute;
+	margin-top: 50px;
+	width: 80px;
+	text-align: center;
+}
+
+
+/*end*/
 
 /*
 	Everything else
 */
+
 body {
 
 	background-color: #E0DEDC;
-	min-height: 720px;
-	min-width: 1024px;
+	/*min-height: 720px;*/
+	min-width: 	1024px;
+
 }
 
 .wrapper {
 
 	width: 99.8%;
-	height: 720px;
+	height: 54%;
+	min-height: 300px;
 }
 
 #inputText {
 
 	width: 39%;
-	height: 700px;
+	height: 98%;
 	resize: none;
 	border: 1px solid black;
 	margin: 0px;
@@ -99,11 +324,13 @@ body {
 #output {
 
 	width: 39%;
-	height: 700px;
+	height: 98%;
 	resize: none;
 	border: 1px solid black;
 	margin-left: 8px;
 	float: left;
+	overflow: auto;
+	word-wrap: break-word;
 }
 
 #chosenFile {
@@ -131,14 +358,26 @@ body {
 
 	background-color: white;
 	width: 99%;
-	height: 400px;
 	resize: none;
 	border: 1px solid black;
 	float: left;
+	height: 100%;
+	min-height: 200px;
 }
+
+#consoleContainer {
+
+	height: 34%;
+}
+
 .header {
 
 	width: 97%
+}
+
+#heading {
+
+	margin-top: 30px;
 }
 
 .header td {

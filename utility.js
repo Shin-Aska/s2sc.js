@@ -67,7 +67,7 @@ var isEquation = function(arr, language) {
 		funcRepresentation2 = "toString_float";
 	}
 
-	console.log(n);
+	//console.log(n);
 	for (var i = 0; i < n.length; i++) {
 
         var noriginal = n[i];

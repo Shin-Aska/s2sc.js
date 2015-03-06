@@ -5070,7 +5070,7 @@ var generator = {
 						}
 
 						lbuffer[i] = new Line(-1, paramMap, paramValues, paramID);
-						lbuffer[i].actionStack.push(new Action(parser.parse(paramToken).symbol));
+						lbuffer[i].actionStack.push(new Action(parser.parse(paramToken, "Python-language").symbol));
 						var tmpLine = generator.c.to.python.processDeclarativeStatement(new Array(), lbuffer[i], lbuffer[i].actionStack[0], true, new Array(), "Python-language", "C-language");
 
                         try {
@@ -5370,7 +5370,7 @@ var generator = {
                                         }
                                     }
 
-                                    var resultLine = generator.c.to.python.processBasicStatement(new Array(), new Line(-1, paramMap, paramValues, paramID), new Action(parser.parse(paramToken).symbol), true, new Array(), "C-language", "Python-language");
+                                    var resultLine = generator.c.to.python.processBasicStatement(new Array(), new Line(-1, paramMap, paramValues, paramID), new Action(parser.parse(paramToken, "Python-language").symbol), true, new Array(), "C-language", "Python-language");
                                     if (isambiguous) {
 
                                         parameterString += value[i];

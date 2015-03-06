@@ -36,136 +36,140 @@ function ParseHistoryRow (buffer, unscanned, next, action) {
 
 var parser = {
 
-	grammar : [
+	python: {
+		grammar : [
 
-		//Import
-		"importWhole <- import id F",
-		"importComponent <- import id from id",
-		"importS <- import id .",
-		"import <- importS",
-		"actionImport <- importWhole | importComponent",
+			//Import
+			"importWhole <- import id F",
+			"importComponent <- import id from id",
+			"importS <- import id .",
+			"import <- importS",
+			"actionImport <- importWhole | importComponent",
 
-		"funcStrDecl <- strDecl + func",
-		// For decimal
-		"const <- int ( sConst ) | int result | float ( sConst ) | float result | int ( boolStmt ) | float ( boolStmt )",
+			"funcStrDecl <- strDecl + func",
+			// For decimal
+			"const <- int ( sConst ) | int result | float ( sConst ) | float result | int ( boolStmt ) | float ( boolStmt )",
 
-		// String Operation
-		"sConst <- id + sConst | sConst + id | sConst + sConst",
-		"sConst <- str ( sConst ) | str result | ( sConst ) | str ( boolStmt )",
+			// String Operation
+			"sConst <- id + sConst | sConst + id | sConst + sConst",
+			"sConst <- str ( sConst ) | str result | ( sConst ) | str ( boolStmt )",
 
-		//Function Defintion
-		"funcDef <- def id ( paramList ) : | def id ( ) : | funcDefInit : | def id :",
-		"funcDefInit <- def id ( id )",
-		"funcCall <- id ( paramList ) F | id ( ) F | id result F",
+			//Function Defintion
+			"funcDef <- def id ( paramList ) : | def id ( ) : | funcDefInit : | def id :",
+			"funcDefInit <- def id ( id )",
+			"funcCall <- id ( paramList ) F | id ( ) F | id result F",
 
-		//Class Definition
-		"classDef <- class id :",
+			//Class Definition
+			"classDef <- class id :",
 
-		//Conditional Statement
-		"condStmt <- if boolStmt : | elif boolStmt : | else :",
-		"condStmt <- if result : | elif result :",
+			//Conditional Statement
+			"condStmt <- if boolStmt : | elif boolStmt : | else :",
+			"condStmt <- if result : | elif result :",
 
-		//Loop statement
-		"loopStmt <- forLoopStmt | whileLoopStmt",
-		"whileLoopStmt <- while boolStmt :",
-		"forLoopStmt <- for id in funcCall :",
+			//Loop statement
+			"loopStmt <- forLoopStmt | whileLoopStmt",
+			"whileLoopStmt <- while boolStmt :",
+			"forLoopStmt <- for id in funcCall :",
 
-		//Function Parameters
-		"id <- funcCall",
-		"funcCall  <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( ) ",
-		"paramList <- result , result F | id , id  F | sConst , sConst F",
-		"paramList <- result , id  F | id , result  F | id , sConst F",
-		"paramList <- sConst , result  F | sConst , id  F | result , sConst F",
-		"paramList <- const , id  F | id , const  F | sConst , const F",
-		"paramList <- const , result  F | result , const  F | const, sConst  F | const , const F",
-		"paramList <- paramList , id  F | paramList , sConst  F | paramList , result  F | paramList , const F",
+			//Function Parameters
+			"id <- funcCall",
+			"funcCall  <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( ) ",
+			"paramList <- result , result F | id , id  F | sConst , sConst F",
+			"paramList <- result , id  F | id , result  F | id , sConst F",
+			"paramList <- sConst , result  F | sConst , id  F | result , sConst F",
+			"paramList <- const , id  F | id , const  F | sConst , const F",
+			"paramList <- const , result  F | result , const  F | const, sConst  F | const , const F",
+			"paramList <- paramList , id  F | paramList , sConst  F | paramList , result  F | paramList , const F",
 
-        // Array
-        "array <- [ paramList ]",
+	        // Array
+	        "array <- [ paramList ]",
 
-		// Return Types
+			// Return Types
 
-		"returnConst <- return const F | return result F",
-		"returnString <- return sConst F",
-		"returnUndefined <- return id F | return F",
+			"returnConst <- return const F | return result F",
+			"returnString <- return sConst F",
+			"returnUndefined <- return id F | return F",
 
-		// Boolean keywords
-		"boolStmt <- True",
-		"boolStmt <- False",
+			// Boolean keywords
+			"boolStmt <- True",
+			"boolStmt <- False",
 
-		// Boolean cases
-		"boolStmt <- ( boolStmt )",
-		"boolStmt <- id < id | id > id | id == id",
-		"boolStmt <- const < const F | const > const F | const == const F",
-		"boolStmt <- id < const F | id > const F | id == const F",
-		"boolStmt <- const < id F | const > id F | const == id F",
-		"boolStmt <- sConst < const F | sConst > const F | sConst == const F",
-		"boolStmt <- sConst < id F | sConst > id F | sConst == id F",
-		"boolStmt <- const < sConst F | const > sConst F | const == sConst F",
-		"boolStmt <- id < sConst F | id > sConst F | id == sConst F",
-		"boolStmt <- sConst < sConst F | sConst > sConst F | sConst == sConst F",
-		"boolStmt <- result < const F | result > const F | result == const F",
-		"boolStmt <- const < result F | const > result F | const == result F",
-		"boolStmt <- result < id F | result > id F | result == id F",
-		"boolStmt <- id < result F | id > result F | id == result F",
-		"boolStmt <- result < result F | result > result F | result == result F",
-		"boolStmt <- result < sConst F | result > sConst F | result == sConst F",
-		"boolStmt <- boolStmt < id F | boolStmt > id F | boolStmt == id F",
-		"boolStmt <- boolStmt < const F | boolStmt > const F | boolStmt == const F",
-		"boolStmt <- boolStmt < result F | boolStmt > result F | boolStmt == result F",
-		"boolStmt <- id < boolStmt F | id > boolStmt F | id == boolStmt F",
-		"boolStmt <- const < boolStmt F | const > boolStmt F | const == boolStmt F",
-		"boolStmt <- result < boolStmt F | result > boolStmt F | result == boolStmt F",
-		"boolStmt <- boolStmt + boolStmt | boolStmt - boolStmt | boolStmt * boolStmt",
-		"boolStmt <- boolStmt / boolStmt | boolStmt % boolStmt | boolStmt ** boolStmt",
-		"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt | not boolStmt F",
-		"boolStmt <- boolStmt and id | boolStmt or id | id and boolStmt | id or boolStmt",
-		"boolStmt <- not id F",
+			// Boolean cases
+			"boolStmt <- ( boolStmt )",
+			"boolStmt <- id < id | id > id | id == id",
+			"boolStmt <- const < const F | const > const F | const == const F",
+			"boolStmt <- id < const F | id > const F | id == const F",
+			"boolStmt <- const < id F | const > id F | const == id F",
+			"boolStmt <- sConst < const F | sConst > const F | sConst == const F",
+			"boolStmt <- sConst < id F | sConst > id F | sConst == id F",
+			"boolStmt <- const < sConst F | const > sConst F | const == sConst F",
+			"boolStmt <- id < sConst F | id > sConst F | id == sConst F",
+			"boolStmt <- sConst < sConst F | sConst > sConst F | sConst == sConst F",
+			"boolStmt <- result < const F | result > const F | result == const F",
+			"boolStmt <- const < result F | const > result F | const == result F",
+			"boolStmt <- result < id F | result > id F | result == id F",
+			"boolStmt <- id < result F | id > result F | id == result F",
+			"boolStmt <- result < result F | result > result F | result == result F",
+			"boolStmt <- result < sConst F | result > sConst F | result == sConst F",
+			"boolStmt <- boolStmt < id F | boolStmt > id F | boolStmt == id F",
+			"boolStmt <- boolStmt < const F | boolStmt > const F | boolStmt == const F",
+			"boolStmt <- boolStmt < result F | boolStmt > result F | boolStmt == result F",
+			"boolStmt <- id < boolStmt F | id > boolStmt F | id == boolStmt F",
+			"boolStmt <- const < boolStmt F | const > boolStmt F | const == boolStmt F",
+			"boolStmt <- result < boolStmt F | result > boolStmt F | result == boolStmt F",
+			"boolStmt <- boolStmt + boolStmt | boolStmt - boolStmt | boolStmt * boolStmt",
+			"boolStmt <- boolStmt / boolStmt | boolStmt % boolStmt | boolStmt ** boolStmt",
+			"boolStmt <- boolStmt and boolStmt | boolStmt or boolStmt | not boolStmt F",
+			"boolStmt <- boolStmt and id | boolStmt or id | id and boolStmt | id or boolStmt",
+			"boolStmt <- not id F",
 
-		// Arithmetic cases
-		"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",
-		"product <- product * id | product * const | id * product | const * product | product * product | product * result | result * product | result * result",
-        "product <- id * boolStmt | boolStmt * id | const * boolStmt | boolStmt * const | boolStmt * result | result * boolStmt",
+			// Arithmetic cases
+			"product <- id * id | const * const | id * const | const * id | result * id | id * result | result * const | const * result",
+			"product <- product * id | product * const | id * product | const * product | product * product | product * result | result * product | result * result",
+	        "product <- id * boolStmt | boolStmt * id | const * boolStmt | boolStmt * const | boolStmt * result | result * boolStmt",
 
-		"quotient <- id / id | const / const | id / const | const / id | result / id | id / result | result / const | const / result",
-		"quotient <- quotient / id | quotient / const | id / quotient | const / quotient | quotient / quotient | quotient / result | result / quotient | result / result",
-		"quotient <- id / boolStmt | boolStmt / id | const / boolStmt | boolStmt / const | boolStmt / result | result / boolStmt",
+			"quotient <- id / id | const / const | id / const | const / id | result / id | id / result | result / const | const / result",
+			"quotient <- quotient / id | quotient / const | id / quotient | const / quotient | quotient / quotient | quotient / result | result / quotient | result / result",
+			"quotient <- id / boolStmt | boolStmt / id | const / boolStmt | boolStmt / const | boolStmt / result | result / boolStmt",
 
-		"sum <- id + id | const + const | id + const | const + id | result + id | id + result | result + const | const + result",
-		"sum <- sum + const | sum + id | id + sum | const + sum | sum + result | result + sum | result + result",
-        "sum <- id + boolStmt | boolStmt + id | const + boolStmt | boolStmt + const | boolStmt + result | result + boolStmt",
+			"sum <- id + id | const + const | id + const | const + id | result + id | id + result | result + const | const + result",
+			"sum <- sum + const | sum + id | id + sum | const + sum | sum + result | result + sum | result + result",
+	        "sum <- id + boolStmt | boolStmt + id | const + boolStmt | boolStmt + const | boolStmt + result | result + boolStmt",
 
-		"difference <- id - id | const - const | id - const | const - id | result - id | id - result | result - const | const - result",
-		"difference <- difference - id | difference - const | id - difference | const - difference | difference - result | result - difference | result - result",
-        "difference <- id - boolStmt | boolStmt - id | const - boolStmt | boolStmt - const | boolStmt - result | result - boolStmt",
+			"difference <- id - id | const - const | id - const | const - id | result - id | id - result | result - const | const - result",
+			"difference <- difference - id | difference - const | id - difference | const - difference | difference - result | result - difference | result - result",
+	        "difference <- id - boolStmt | boolStmt - id | const - boolStmt | boolStmt - const | boolStmt - result | result - boolStmt",
 
-		"remainder <- id % id | const % const | id % const | const % id | result % id | id % result | result % const | const % result",
-		"remainder <- difference % id | difference % const | id % difference | const % difference | difference % result | result % difference | result % result",
-        "remainder<- id % boolStmt | boolStmt % id | const % boolStmt | boolStmt % const | boolStmt % result | result % boolStmt",
+			"remainder <- id % id | const % const | id % const | const % id | result % id | id % result | result % const | const % result",
+			"remainder <- difference % id | difference % const | id % difference | const % difference | difference % result | result % difference | result % result",
+	        "remainder<- id % boolStmt | boolStmt % id | const % boolStmt | boolStmt % const | boolStmt % result | result % boolStmt",
 
-		"exp <- id ** id | const ** const | id ** const | const ** id | result ** id | id ** result | result ** const | const ** result",
-		"exp <- difference ** id | difference ** const | id ** difference | const ** difference | difference ** result | result ** difference | result ** result",
+			"exp <- id ** id | const ** const | id ** const | const ** id | result ** id | id ** result | result ** const | const ** result",
+			"exp <- difference ** id | difference ** const | id ** difference | const ** difference | difference ** result | result ** difference | result ** result",
 
-		"floorQuotient <- id // id | const // const | id // const | const // id | result // id | id // result | result // const | const // result",
-		"floorQuotient <- difference // id | difference // const | id // difference | const // difference | difference // result | result // difference | result // result",
+			"floorQuotient <- id // id | const // const | id // const | const // id | result // id | id // result | result // const | const // result",
+			"floorQuotient <- difference // id | difference // const | id // difference | const // difference | difference // result | result // difference | result // result",
 
-		"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id ) | funcCall",
+			"result <- floorQuotient | exp | remainder | product | quotient | sum | difference | ( const ) | ( result ) | ( id ) | funcCall",
 
-		"const <- + const | + id | - const | - id",
-		"decl <- id = result F | id = const F | id = id F",
-		"strDecl <- id = sConst F",
-		"boolDecl <- id = boolStmt F",
+			"const <- + const | + id | - const | - id",
+			"decl <- id = result F | id = const F | id = id F",
+			"strDecl <- id = sConst F",
+			"boolDecl <- id = boolStmt F",
 
-		"cmpAsgn <- id += result F | id += const F | id += id F | id += boolStmt F",
-		"cmpAsgn <- id *= result F | id *= const F | id *= id F | id += boolStmt F",
-		"cmpAsgn <- id -= result F | id -= const F | id -= id F | id += boolStmt F",
-		"cmpAsgn <- id /= result F | id /= const F | id /= id F | id += boolStmt F",
-		"cmpAsgn <- id += sConst F",
+			"cmpAsgn <- id += result F | id += const F | id += id F | id += boolStmt F",
+			"cmpAsgn <- id *= result F | id *= const F | id *= id F | id += boolStmt F",
+			"cmpAsgn <- id -= result F | id -= const F | id -= id F | id += boolStmt F",
+			"cmpAsgn <- id /= result F | id /= const F | id /= id F | id += boolStmt F",
+			"cmpAsgn <- id += sConst F",
 
-		// Array Assignment
+			// Array Assignment
 
-		"arrayAsgn <- id = array",
-	],
+			"arrayAsgn <- id = array",
+		]
+	},
+
+	grammar: [],
 
 /*
 	Rule object -> contains enumerations for rules in a grammar
@@ -193,7 +197,8 @@ var parser = {
 	tmp: {
 
 		stack: null,
-		stream: null
+		stream: null,
+		cases: null,
 	},
 
 	//
@@ -258,7 +263,7 @@ var parser = {
 	// Syntatically check if the codes submitted to the
 	// system is legal based on the given grammar
 
-	parse: function (map) {
+	parse: function (map, targetLanguage) {
 
 		if (map == "")
 			return true;
@@ -275,6 +280,10 @@ var parser = {
 		var result = Object;
 		result.valid = false;
 		result.symbol = "";
+
+		if (targetLanguage == parser.language.python) {
+			parser.grammar = parser.python.grammar;
+		}
 
 		//this is the part of the code where the grammar list
 		//is converted into arrays
@@ -294,6 +303,7 @@ var parser = {
 			}
 		}
 
+		parser.tmp.cases = cases;
 		var actionBuffer = false;
 		var stack = tokens.slice();
 		var buffer= [];
@@ -410,5 +420,10 @@ var parser = {
 		}
 
 		return result;
+	},
+
+	language: {
+		c: "C-language",
+		python: "Python-language",
 	}
 }

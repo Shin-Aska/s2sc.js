@@ -14,9 +14,27 @@
 	<script src="s2sc.js"></script>
 	<!-- ends here -->
 
+	<!-- Third party plugins -->
+
 	<script src="jquery/jquery.js"></script>
 	<script src="jquery/jquery-ui.custom.js" type="text/javascript"></script>
 	<script src="edit_area/edit_area_full.js"></script>
+	
+
+	<!-- Window Menus -->
+	<script src="window/tokenizer-settings.js"></script>
+	<script src="window/parser-settings.js"></script>
+	<script src="window/dictionary-settings.js"></script>
+
+	<script src="window/editorPreference.js"></script>
+	<script src="window/cConfigPreference.js"></script>
+	<script src="window/pythonConfigPreference.js"></script>
+	<script src="window/s2scPreference.js"></script>
+
+	<script src="window/add-new-grammar.js"></script>
+	<script src="window/add-new-token.js"></script>
+
+	<!-- Whole application that uses everything-->
 	<script src="consolehandler.js"></script>
 	<script src="application.js"></script>
 
@@ -36,8 +54,8 @@
 	<!-- -->
 
 	<link rel="stylesheet" type="text/css" href="display.css">
-	<link rel="stylesheet" type="text/css" href="jquery/themes/base/jquery-ui.css">
 	<link rel="stylesheet" media="screen" href="superfish/css/superfish.css">
+	<link rel="stylesheet" href="jquery/themes/base/jquery.ui.all.css">
 </head>
 	<body>
 
@@ -49,22 +67,35 @@
 				</ul>
 			</li>
 			<li>
-				<a>Convert</a>
+				<a>Code Generation</a>
 				<ul>
-					<li>Convert Python 3
+
+					<li>Settings
 						<ul>
-							<li id="convertButton">> C</li>
+							<li id="parserSelector">Parser</li>
+							<li id="tokenizerSelector">Tokenizer</li>
+							<li id="dictionarySelector">Dictionary</li>
 						</ul>
 					</li>
+					<li>Convert
+						<ul>
+							<li>Python 3
+								<ul>
+									<li id="convertButton">> C</li>
+								</ul>
+							</li>
+						</ul>
+					</li>
+
 				</ul>
 			</li>
 			<li>
 				<a>Preferences</a>
 				<ul>
-					<li>Editor</li>
-					<li>C Config</li>
-					<li>Python Config</li>
-					<li>S2SC</li>
+					<li id="editorSelector">Editor</li>
+					<li id="cConfigSelector" style="display: none">C Config</li>
+					<li id="pythonConfigSelector" style="display: none">Python Config</li>
+					<li id="s2scSelector" style="display: none">S2SC</li>
 				</ul>
 			</li>
 			<li>
@@ -77,6 +108,14 @@
 			</li>
 		</ul>
 
+		<div id="shortcutbar">
+			
+			<!--
+			<div id="openFileShortcut" class="shortcutButton"></div>
+			<div id="compileCtoPython" class="shortcutButton"></div>
+			-->
+		</div>
+
 		<div id="menuframe">
 		</div>
 
@@ -86,7 +125,7 @@
 				
 		</p>
 
-		<table class="header">
+		<table class="header" id="heading">
 			<tr>
 				<td>
 					Input
@@ -95,20 +134,188 @@
 					&nbsp&nbsp Output
 				</td>
 				<td>
-					&nbsp&nbsp&nbsp&nbsp&nbsp Function
+					&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp Function & Variables
 				</td>
 			</tr>
 		</table>
 		<div class="wrapper">
 			<textarea id="inputText"></textarea>
-			<textarea id="output">Output here will be generated once you click the [convert] button</textarea>
+			<textarea id="output"></textarea>
 			<div id="functionList">
 			</div>
 		</div>
 
 		<div id="consoleContainer">
-			<table class="header"><tr><td>Console:</td></tr></table>
-			<iframe id='console'>
+			<!--table class="header"><tr><td>Console:</td></tr></table>-->
+			<iframe id='console'></iframe>
+		</div>
+
+		<div id="tokenizerWindow" title="Tokenizer Settings">
+			
+			<table style="width: 80%">
+				<tr>
+					<td><p class="window-desc">Languages: </p></td>
+					<td><p class="window-desc">Token: </p></td>
+				</tr>
+			</table>
+			
+			<div id="languageList">
+			</div>
+
+			<div id="tokenList">
+			</div>
+
+			<input id="addToken" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only windowSelectionButton" type="button" style="margin-left: 5px;" value="Add Token">
+			<input id="deleteToken" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only windowSelectionButton" type="button" value="Delete Token">
+		</div>
+
+		<div id="parserWindow" title="Parser Settings">
+			
+			<table style="width: 92%">
+				<tr>
+					<td><p class="window-desc">Languages: </p></td>
+					<td><p class="window-desc">Token: </p></td>
+				</tr>
+			</table>
+			
+			<div id="parserList">
+			</div>
+
+			<div id="grammarList">
+			</div>
+
+			<input id="addGrammar" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only windowSelectionButton" type="button" style="margin-left: 5px;" value="Add new grammar">
+			<input id="deleteGrammar" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only windowSelectionButton" type="button" value="Delete selected grammar(s)">
+		</div>
+
+		<div id="dictionaryWindow" title="Dictionary Settings">
+			
+			<table style="width: 85%">
+				<tr>
+					<td><p class="window-desc">Languages: </p></td>
+					<td><p class="window-desc">Function: </p></td>
+					<td><p class="window-desc">&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspCode: </p></td>
+				</tr>
+			</table>
+			
+			<div id="supportedLanguageList">
+			</div>
+
+			<div id="dictionaryFunctionList">
+			</div>
+
+			<textarea id="functionCode"></textarea>
+
+			<input id="addFunction" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only windowSelectionButton" type="button" style="margin-left: 5px; display: none" value="Add new function">
+			<input id="deleteFunction" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only windowSelectionButton" type="button" style="display: none" value="Delete function(s)">
+		</div>
+
+		<div id="editorWindow" title="Editor">
+			
+			<div class="buttonContainer">
+
+				<span class="ui-icon ui-icon-info" style="float:left; margin:0 7px 40px 0;"></span>
+				<p style="font-size: 10pt;">
+					You can select here which shortcuts is shown on the shortcut panel bar. Take note that
+					any changes done here will be saved permanently. The selection panel shows the available
+					shortcuts that had not been placed while the shown panel shows the shortcuts used by the shortcut
+					panel bar, your shortcuts will be on the same order as you configured it.
+				</p>
+				<hr style="rgba(0, 0, 0, 0.4); opacity: 0.4;">
+				<p style="font-size: 8pt;">Selection:</p>
+				<div id="selection" class="draggable-list" style="margin-bottom: -15px;">
+	
+				</div>
+				<br>
+
+				<p style="font-size: 8pt;">Shown:</p>
+				<div id="shownToolbar" class="draggable-list">
+
+				</div>
+
+			</div>
+		</div>
+
+		<div id="C-ConfigWindow" title="C Configuration">
+			
+		</div>
+
+		<div id="Python-ConfigWindow" title="Python Configuration">
+			
+		</div>
+
+		<div id="S2SCWindow" title="S2SC Configuration">
+			
+		</div>
+
+		<div id="addNewGrammar" title="Add New Grammar">
+			
+			<table class="allWidth">
+				<tr>
+					<td>Programming Language:</td>
+					<td id="addNewGrammar_Language"></td>
+				</tr>
+				<tr>
+					<td>Representation:</td>
+					<td><input id="addNewGrammar_representation" class="text ui-widget-content ui-corner-all allWidth" type="text"></input></td>
+				</tr>
+				<tr>
+					<td>Condition:</td>
+					<td><input id="addNewGrammar_condition" class="text ui-widget-content ui-corner-all allWidth" type="text"></input></td>
+				</tr>
+			</table>
+
+		</div>
+
+		<div id="addNewToken" title="Add New Token">
+			
+			<table class="allWidth">
+				<tr>
+					<td>Programming Language:</td>
+					<td id="addNewToken_Language"></td>
+				</tr>
+				<tr>
+					<td>Token Symbol:</td>
+					<td><input id="addNewToken_representation" class="text ui-widget-content ui-corner-all allWidth" type="text"></input></td>
+				</tr>
+				<tr>
+					<td>Token Category:</td>
+					<td>
+						<select id="addNewToken_condition" class="text ui-widget-content ui-corner-all allWidth" >
+							<option value="Keyword">Keyword</option>
+							<option value="Symbol">Symbol</option>
+							<option value="ReserveWord">Reserve Word</option>
+						</select>
+					</td>
+				</tr>
+			</table>
+
+		</div>
+
+		<div class="minify" id="addNewGrammar_error_noLanguage" title="Invalid Language">
+			<p>
+				<span class="ui-icon ui-icon-info" style="float:left; margin:0 7px 50px 0;"></span>
+				The parser could not identify what programming language you're using
+			</p>
+			<p>
+				Please select one if you have not selected any</b>.
+			</p>
 		</div>
 	</body>
 </html>
+
+<!-- 
+<div id="additionForm" title="Add an Addition Type">
+	<p class="validateTips">All form fields are required.</p>
+	<hr>
+	<form>
+	<fieldset>
+		<label for="aname">Type:</label><br>
+		<input type="text" name="aname" id="aname" class="text ui-widget-content ui-corner-all" /> <br><br>
+		<label for="adesc">Description: </label> <br>
+		<textarea name="adesc" id="adesc" value="" class="text ui-widget-content ui-corner-all" />
+		</textarea><br><br>
+	</fieldset>
+	</form>
+</div>
+-->
