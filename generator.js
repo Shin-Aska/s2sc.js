@@ -694,7 +694,7 @@ var generator = {
 				return generator.refactor.variableList[index];
 			}
 
-			throw "Not found variable(" + name + ") on refactor list";
+			throw "variable " + name + " is not defined";
 		},
 
 		insertVariable: function (variable) {
@@ -900,6 +900,7 @@ var generator = {
 					var parameterSeparated = false;
 					var override = false;
 					var hasReturnType = false;
+					var errorDescription = "";
 
 					for (var j = 0; j < line.tokens.length; j++) {
 
@@ -955,6 +956,7 @@ var generator = {
 							}
 							catch (exception) {
 
+								errorDescription = exception;
 								legal = false;
 							}
 						}
@@ -968,7 +970,8 @@ var generator = {
 								}
 							}
 							catch (exception) {
-								alert(exception + " " + line.values + " " + j + " " + line.tokens);
+
+								errorDescription = "Illegal usage of constant expression";
 								legal = false;
 							}
 
@@ -1001,10 +1004,11 @@ var generator = {
 						}
 						else if (line.tokens[j] == generator.enums.token.keyword) {
 
-							var funcType = dictionary.pages.findWord(line.values[j], currentLanguage).returnType;
+							var keyword = dictionary.pages.findWord(line.values[j], currentLanguage);
+							var funcType = keyword.returnType;
 
 							if (funcType == generator.enums.c.data.type.void) {
-
+								errorDescription = "function " + keyword.name + " does not define a data type.";
 								legal = false;
 							}
 							else if (funcType == generator.enums.c.data.type.string && !typeCasted) {
@@ -1090,13 +1094,13 @@ var generator = {
 							 compoundVariableDataType != generator.enums.c.data.type.float &&
 							 compoundVariableDataType != generator.enums.c.data.type.bool
 							)) {
-
+							errorDescription = "incompatible data types";
 							legal = false;
 						}
 					}
 
 					if (isStr && numericVariables > 0) {
-						//alert(line.values + " -> " + isStr + ", " + numericVariables);
+						errorDescription = "String and Numeric variables cannot be added directly";
 						legal = false;
 					}
 
@@ -2673,7 +2677,7 @@ var generator = {
 
 						if (generator.options.detailedErrors) {
 							line.contentStack = [];
-							errorHandler.raiseError(new Error(line.lineNumber + 1, line.values.slice(), "Syntax Error"));
+							errorHandler.raiseError(new Error(line.lineNumber + 1, line.values.slice(), errorDescription));
 						}
 					}
 
@@ -2693,6 +2697,7 @@ var generator = {
 					var typeCasted = false;
 					var numericVariables = 0;
 					var checkStack = new ParenthesisStack();
+					var errorDescription = "";
 
 					for (var j = 0; j < line.tokens.length; j++) {
 
@@ -2762,6 +2767,7 @@ var generator = {
 							}
 							catch (exception) {
 
+								errorDescription = exception;
 								legal = false;
 							}
 						}
@@ -2776,6 +2782,7 @@ var generator = {
 								}
 								catch (exception) {
 
+									errorDescription = "Illegal usage of constant expression";
 									legal = false;
 								}
 							}
@@ -2793,6 +2800,7 @@ var generator = {
 										generator.enums.c.data.type.float;
 								}
 								catch (exception) {
+									errorDescription = "Illegal usage of string literals";
 									legal = false;
 								}
 							}
@@ -2877,8 +2885,10 @@ var generator = {
 								}
 								else {
 
-									if (funcType == generator.enums.c.data.type.void)
+									if (funcType == generator.enums.c.data.type.void) {
+										errorDescription = "function " + keyword.name + " does not define a data type.";
 										legal = false;
+									}
 									else if (funcType == generator.enums.c.data.type.string && !typeCasted) {
 										isStr = true;
 										variable.type = generator.enums.c.data.type.string;
@@ -2899,8 +2909,10 @@ var generator = {
 							}
 							else {
 
-								if (funcType == generator.enums.c.data.type.void)
+								if (funcType == generator.enums.c.data.type.void) {
+									errorDescription = "function " + keyword.name + " does not define a data type.";
 									legal = false;
+								}
 								else if (funcType == generator.enums.c.data.type.string && !typeCasted) {
 									isStr = true;
 								}
@@ -2957,7 +2969,7 @@ var generator = {
 
 					//alert(isStr + "  " + numericVariables + "  " + legal);
 					if ((isStr && numericVariables > 0) || variable.type == 0) {
-
+						errorDescription = "String and Numeric variables cannot be added directly";
 						legal = false;
 					}
 					if (variable.type == generator.enums.c.data.type.bool) {
@@ -4687,7 +4699,7 @@ var generator = {
 
 						if (generator.options.detailedErrors) {
 							line.contentStack = [];
-							errorHandler.raiseError(new Error(line.lineNumber + 1, line.values.slice(), "Syntax Error"));
+							errorHandler.raiseError(new Error(line.lineNumber + 1, line.values.slice(), errorDescription));
 						}
 					}
 
@@ -5630,11 +5642,35 @@ var generator = {
 			else if (action.type == generator.enums.action.import) {
 
                 // To do: Import translation here
-                alert("Import not currently supported yet");
+                errorHandler.raiseError(new Error(i + 1, values.slice(), "Import statements not currently supported"));
 			}
 			else if (action.type == generator.enums.error.parse) {
 
-				errorHandler.raiseError(new Error(i + 1, values.slice(), "Syntax Error"));
+				var parseError = "Syntax Error";
+				if (tokens[0] == generator.enums.token.keyword) {
+					parseError += ": Invalid use of function parameter";
+				}
+				else if (tokens[0] == generator.enums.token.stringConstant ||
+						 tokens[0] == generator.enums.token.constant) {
+					parseError += ": Numeric and Strings cannot be combined directly.";
+				}
+				else if (tokens[0] == generator.enums.token.reserveWord && values[0] == "def") {
+
+					var colonFound = false;
+					for (var x = 0; x < values.length; x++) {
+						if (values[x] == ":") {
+							colonFound = true;
+						}
+					}
+
+					if (colonFound) {
+						parseError += ": Illegal use of function definition";
+					}
+					else {
+						parseError += ": Missing ':' in function definition";
+					}
+				}
+				errorHandler.raiseError(new Error(i + 1, values.slice(), parseError));
 			}
 
             var pushToBuffer = true;

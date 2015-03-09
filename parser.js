@@ -50,6 +50,16 @@ var parser = {
 			// For decimal
 			"const <- int ( sConst ) | int result | float ( sConst ) | float result | int ( boolStmt ) | float ( boolStmt )",
 
+			//Function Parameters
+			"id <- funcCall",
+			"funcCall  <- kwd ( sConst ) | kwd result | kwd ( paramList ) | kwd ( ) ",
+			"paramList <- result , result F | id , id  F | sConst , sConst F",
+			"paramList <- result , id  F | id , result  F | id , sConst F",
+			"paramList <- sConst , result  F | sConst , id  F | result , sConst F",
+			"paramList <- const , id  F | id , const  F | sConst , const F",
+			"paramList <- const , result  F | result , const  F | const, sConst  F | const , const F",
+			"paramList <- paramList , id  F | paramList , sConst  F | paramList , result  F | paramList , const F",
+
 			// String Operation
 			"sConst <- id + sConst | sConst + id | sConst + sConst",
 			"sConst <- str ( sConst ) | str result | ( sConst ) | str ( boolStmt )",
@@ -71,15 +81,6 @@ var parser = {
 			"whileLoopStmt <- while boolStmt :",
 			"forLoopStmt <- for id in funcCall :",
 
-			//Function Parameters
-			"id <- funcCall",
-			"funcCall  <- kwd sConst | kwd result | kwd ( paramList ) | kwd ( ) ",
-			"paramList <- result , result F | id , id  F | sConst , sConst F",
-			"paramList <- result , id  F | id , result  F | id , sConst F",
-			"paramList <- sConst , result  F | sConst , id  F | result , sConst F",
-			"paramList <- const , id  F | id , const  F | sConst , const F",
-			"paramList <- const , result  F | result , const  F | const, sConst  F | const , const F",
-			"paramList <- paramList , id  F | paramList , sConst  F | paramList , result  F | paramList , const F",
 
 	        // Array
 	        "array <- [ paramList ]",

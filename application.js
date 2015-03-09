@@ -29,10 +29,14 @@ var updateShortcut = function() {
 	$("#shortcutbar").html(shortcuts_str);
 
 	for (var i = 0; i < shortcuts.length; i++) {
-		var f = "$('" + shortcuts[i].functionTarget + "').click()";
-		$("#" + shortcuts[i].id).on("click", function(){
-			eval(f);
-		});
+		if (true) {
+			var f = "$('" + shortcuts[i].functionTarget + "').click()";
+			var s = function(a) {
+				eval(a.data.param);
+			}
+			$("#" + shortcuts[i].id).bind('click', {param: f}, s);
+		}
+			
 		//document.getElementById().onclick = eval("alert('@@@')");
 	}
 }
@@ -143,12 +147,46 @@ $( document ).ready(function() {
 				resultant += "<p>Showing result...</p>";
 				resultant += "<hr>";
 				resultant += "<table><tr><td colspan=2>Tokens</td></tr>";
+
+				var cssLink = document.createElement("link") 
+	            cssLink.href = "console.css"; 
+	            cssLink .rel = "stylesheet"; 
+	            cssLink .type = "text/css";
+
+	            
+	            
 				for (var i = 0; i < map.length; i++) {
-					resultant += "<tr><td> " + (i + 1) + ". </td><td>" + map[i] + "&nbsp" + "</td></tr>";
+					resultant += "<tr><td> " + (i + 1) + ". </td><td>";
+
+					var tokens = tokenizer.detokenize(map[i]);
+					for (var j = 0; j < tokens.length; j++) {
+						var currentSelector = tokens[j].replace(/\d+/g, '');
+						var currentIndex 	= tokens[j].replace(/[^0-9.]/g, '');
+
+						if (currentSelector == "id") {
+							resultant += "<p class='console-id' title='" + tokenizer.token.identifier[currentIndex - 1].value + "'>{" + tokens[j] + "}</p>"
+						}
+						else if (currentSelector == "symb") {
+							resultant += "<p class='console-symb' title='" + tokenizer.token.symbol[currentIndex - 1].value + "'>{" + tokens[j] + "}</p>"
+						}
+						else if (currentSelector == "kwd") {
+							resultant += "<p class='console-keyword' title='" + tokenizer.token.keyword[currentIndex - 1].value + "'>{" + tokens[j] + "}</p>"
+						}
+						else if (currentSelector == "res") {
+							resultant += "<p class='console-res' title='" + tokenizer.token.reserveWord[currentIndex - 1].value + "'>{" + tokens[j] + "}</p>"
+						}
+						else if (currentSelector == "const") {
+							resultant += "<p class='console-const' title='" + tokenizer.token.constant[currentIndex - 1].value + "'>{" + tokens[j] + "}</p>"
+						}
+						else if (currentSelector == "sConst") {
+							resultant += "<p class='console-sConst' title='" + tokenizer.token.string[currentIndex - 1].value + "'>{" + tokens[j] + "}</p>"
+						}
+					}
+					resultant += "&nbsp" + "</td></tr>";
 				}
 				resultant += "</table>";
 				resultant += "<hr>";
-				$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + resultant + consolehandler.showParsingInformation(map, "Python-language"));
+				$("#console").contents().find('html').html('<head></head>' + resultant + consolehandler.showParsingInformation(map, "Python-language"));
 
 				document.getElementById('output').value = result;
 				editAreaLoader.setValue("output", result);
@@ -158,15 +196,33 @@ $( document ).ready(function() {
 				var map = s2sc.map;
 
 				if (typeof(exception.fileName) !== "undefined") {
-					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber + "<br>" + consolehandler.showParsingInformation(map, "Python-language") + "</body></html>");
+					$("#console").contents().find('html').html("<head></head>" + "<html><body>" + exception + "  on " + exception.fileName + " at line#: " + exception.lineNumber + "<br>" + consolehandler.showParsingInformation(map, "Python-language") + "</body></html>");
 				}
 				else {
-					$("#console").contents().find('html').html("<style>td, th {border: 1px solid black;}</style>" + "<html><body>" + exception + " [No stack trace available for this error]" + "<br>" + consolehandler.showParsingInformation(map, "Python-language") + "</body></html>");
+					$("#console").contents().find('html').html("<head></head>" + "<html><body>" + exception + " [No stack trace available for this error]" + "<br>" + consolehandler.showParsingInformation(map, "Python-language") + "</body></html>");
 				}
 
 				document.getElementById('output').value = "";
 				editAreaLoader.setValue("output", "");
 			}
+		}
+
+		try {
+
+			$("#console").contents().find("head").html(
+				"<style>" +
+					"td, th {border: 1px solid black;}" +
+					".console-id, .console-symb, .console-res, .console-keyword, .console-const, .console-sConst {display: inline-block; margin: 0px;}" +
+					".console-id:hover, .console-symb:hover, .console-res:hover, .console-keyword:hover, .console-const:hover, .console-sConst:hover {opacity: 0.5}" +
+					".console-id { color: green }" +
+					".console-symb { color: #A52A2A }" +
+					".console-const { color: blue }" +
+					".console-sConst { color: red}" +
+				"</style>"
+			);
+		}
+		catch (ex) {
+
 		}
 
 		var variables = s2sc.list.variables();
@@ -337,4 +393,6 @@ $( document ).ready(function() {
 	connectWith: '.buttonContainer .draggable-list'
 	});
 });
+
+$( document ).tooltip();
 // @license-end
