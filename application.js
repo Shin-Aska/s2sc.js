@@ -11,6 +11,7 @@
  * 2. EditArea (http://www.cdolivet.com/editarea/)
  * 3. Superfish (users.tpg.com.au/j_birch/plugins/superfish)
  * 4. FancyTree (https://github.com/mar10/fancytree)
+ * 5. Jquery UI Touch Punch (http://touchpunch.furf.com/)
  *
  * Further-more it needs the following libraries/tools for the codes it generates in order for it to run/compile
  *
