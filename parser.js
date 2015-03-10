@@ -50,6 +50,11 @@ var parser = {
 			// For decimal
 			"const <- int ( sConst ) | int result | float ( sConst ) | float result | int ( boolStmt ) | float ( boolStmt )",
 
+			//Loop statement
+			"loopStmt <- forLoopStmt | whileLoopStmt",
+			"whileLoopStmt <- while boolStmt :",
+			"forLoopStmt <- for id in funcCall :",
+
 			//Function Parameters
 			"id <- funcCall",
 			"funcCall  <- kwd ( sConst ) | kwd result | kwd ( paramList ) | kwd ( ) ",
@@ -75,11 +80,6 @@ var parser = {
 			//Conditional Statement
 			"condStmt <- if boolStmt : | elif boolStmt : | else :",
 			"condStmt <- if result : | elif result :",
-
-			//Loop statement
-			"loopStmt <- forLoopStmt | whileLoopStmt",
-			"whileLoopStmt <- while boolStmt :",
-			"forLoopStmt <- for id in funcCall :",
 
 
 	        // Array

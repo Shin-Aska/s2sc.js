@@ -42,6 +42,7 @@ var s2sc =  {
 
 				s2sc.clear();
 				tokenizer.reset();
+				errorHandler.clear();
 				dictionary.pages.clear();
 
 				if (generator.options.useDoubleInsteadOfFloat) {

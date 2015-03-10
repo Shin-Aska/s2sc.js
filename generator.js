@@ -5433,7 +5433,6 @@ var generator = {
 		generator.unions.clear();
 		generator.structures.clear();
 		generator.functions.clear();
-		errorHandler.clear();
 
         // Container of loop and functions
         // as it is scanned by the generator
