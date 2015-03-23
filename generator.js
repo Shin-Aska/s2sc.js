@@ -4936,7 +4936,7 @@ var generator = {
 							}
 
 							//cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
-							cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + " < " + loopEndVariable + "; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
+							cbuffer = "for (" + equivKeyword.returnType + " " + loopVarCount + " = 0, " + container + " = " + container + "Loop" + "[" + loopVarCount + "]; " + loopVarCount + " < " + loopEndVariable + " - " + beginLoopVariable + "; " + loopVarCount + "++" + ", " + container + " = " + container + "Loop" + "[" + loopVarCount + "])";
 						}
 						catch (exception) {
 
